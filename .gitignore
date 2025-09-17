@@ -10,6 +10,8 @@ projection_choi.ipynb
 simple_training.ipynb
 training_with_orbax.ipynb
 
+.vscode/
+wandb/
 
 
 .idea/
