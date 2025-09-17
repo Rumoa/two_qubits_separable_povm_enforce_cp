@@ -1,0 +1,16 @@
+{
+    "depth": 3,
+    "width": 128,
+    "architecture": "random_fourier_mlp",
+    "spam_estimation_path": "results_spam_estimation/q15_q16_250ns_2025-08-05_SPAM_ESTIMATION.job",
+    "dataset_path": "datasets/q15_q16_250ns_2025-08-05_FILTERED_DATASET.job",
+    "n_epochs": 900,
+    "batch_size": 8196,
+    "model_seed": 0,
+    "dataset_window_mask": 0.99,
+    "seed_train_test": 0,
+    "comment": "all_times_sigma=5_NONTRAINABLE_FOURIER",
+    "rf_sigma": 5,
+    "n_update_loss_weights":10,
+    "trainable_fourier_features": false
+}
