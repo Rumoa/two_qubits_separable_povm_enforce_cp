@@ -1012,13 +1012,13 @@ def update_loss_weights(model, x, y, loss_weights: LossWeights, args_loss):
     norm_grads_nll = jnp.linalg.norm(jax.flatten_util.ravel_pytree(grads_nll)[0])
     norm_grads_choi = jnp.linalg.norm(jax.flatten_util.ravel_pytree(grads_choi)[0])
 
-    l_nll = (norm_grads_nll + norm_grads_choi) / norm_grads_nll
-    l_choi = (norm_grads_nll + norm_grads_choi) / norm_grads_choi
+    # add epsilon to prevent division by zero
+    eps = 1e-8
+    l_nll = (norm_grads_nll + norm_grads_choi) / (norm_grads_nll + eps)
+    l_choi = (norm_grads_nll + norm_grads_choi) / (norm_grads_choi + eps)
 
     alpha = args_loss.get("loss_alpha", 0.9)
-
     old_weights = loss_weights.weights
-
     new_weights = alpha * old_weights + (1 - alpha) * jnp.array([l_nll, l_choi])
 
     return LossWeights(new_weights)
