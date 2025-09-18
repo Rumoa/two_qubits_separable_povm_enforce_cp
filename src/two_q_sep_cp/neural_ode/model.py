@@ -1,6 +1,6 @@
 import math
 import operator
-from typing import Any
+from typing import Any, Callable
 
 import diffrax
 import equinox as eqx

@@ -13,8 +13,6 @@ training_with_orbax.ipynb
 .vscode/
 wandb/
 
-*.sh
-
 
 .idea/
 cluster_checkpoints/
@@ -49,3 +47,4 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+REDOING_SPAM_ESTIMATION.IPYNB

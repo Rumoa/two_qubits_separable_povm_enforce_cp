@@ -9,7 +9,7 @@
     "model_seed": 0,
     "dataset_window_mask": 0.99,
     "seed_train_test": 0,
-    "comment": "all_times_sigma=5_non_trainable_features",
+    "comment": "all_times_sigma=5_NONTRAINABLE_FOURIER",
     "rf_sigma": 5,
     "n_update_loss_weights":10,
     "trainable_fourier_features": false
