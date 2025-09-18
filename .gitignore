@@ -13,6 +13,9 @@ training_with_orbax.ipynb
 .vscode/
 wandb/
 
+*.out
+*.err
+
 
 .idea/
 cluster_checkpoints/
