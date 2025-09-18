@@ -1,0 +1,1009 @@
+{
+    "Qubits": {
+        "q[0]": {
+            "T1 (s)": 1.5498e-06,
+            "T2 (s)": 5.0204e-05,
+            "Drive Frequency (Hz)": 4363900000.0,
+            "Measuring frequency (Hz)": 10277000000.0,
+            "Readout duration (s)": 2.8599e-06,
+            "Readout fidelity (RB)": 0.8343,
+            "Fidelity readout": 0.8343,
+            "T1 error (s)": 3.4135e-06,
+            "T2 error (s)": 7.2136e-06
+        },
+        "q[1]": {
+            "T1 (s)": 0.28548,
+            "T2 (s)": 0.00012704,
+            "Drive Frequency (Hz)": 4252600000.0,
+            "Measuring frequency (Hz)": 9652700000.0,
+            "Readout duration (s)": 5.7492e-06,
+            "Readout fidelity (RB)": 0.9062,
+            "Fidelity readout": 0.9062,
+            "T1 error (s)": 3817.5,
+            "T2 error (s)": 4.7701e-05
+        },
+        "q[2]": {
+            "T1 (s)": 0.040361,
+            "T2 (s)": 0.0011663,
+            "Drive Frequency (Hz)": 4362900000.0,
+            "Measuring frequency (Hz)": 10077000000.0,
+            "Readout duration (s)": 1.0354e-05,
+            "Readout fidelity (RB)": 0.9138,
+            "Fidelity readout": 0.9138,
+            "T1 error (s)": 400.18,
+            "T2 error (s)": 0.0043657
+        },
+        "q[3]": {
+            "T1 (s)": 2.2131e-06,
+            "T2 (s)": 7.7378e-05,
+            "Drive Frequency (Hz)": 4195200000.0,
+            "Measuring frequency (Hz)": 9850800000.0,
+            "Readout duration (s)": 5.6687e-06,
+            "Readout fidelity (RB)": 0.906,
+            "Fidelity readout": 0.906,
+            "T1 error (s)": 2.4651e-06,
+            "T2 error (s)": 1.5498e-05
+        },
+        "q[4]": {
+            "T1 (s)": 1.3815,
+            "T2 (s)": 9.0167e-05,
+            "Drive Frequency (Hz)": 4318100000.0,
+            "Measuring frequency (Hz)": 9645000000.0,
+            "Readout duration (s)": 5.977e-06,
+            "Readout fidelity (RB)": 0.8501,
+            "Fidelity readout": 0.8501,
+            "T1 error (s)": 10941.0,
+            "T2 error (s)": 1.9273e-05
+        },
+        "q[5]": {
+            "T1 (s)": 0.47273,
+            "T2 (s)": 4.6877e-05,
+            "Drive Frequency (Hz)": 4393600000.0,
+            "Measuring frequency (Hz)": 9848300000.0,
+            "Readout duration (s)": 1.6e-05,
+            "Readout fidelity (RB)": 0.8835,
+            "Fidelity readout": 0.8835,
+            "T1 error (s)": 8724.7,
+            "T2 error (s)": 6.1222e-06
+        },
+        "q[6]": {
+            "T1 (s)": -0.3818,
+            "T2 (s)": 0.00025772,
+            "Drive Frequency (Hz)": 4404100000.0,
+            "Measuring frequency (Hz)": 10271000000.0,
+            "Readout duration (s)": 6.1752e-06,
+            "Readout fidelity (RB)": 0.9292,
+            "Fidelity readout": 0.9292,
+            "T1 error (s)": 11434.0,
+            "T2 error (s)": 0.0001658
+        },
+        "q[7]": {
+            "T1 (s)": 1.006e-05,
+            "T2 (s)": 0.08466,
+            "Drive Frequency (Hz)": 4406000000.0,
+            "Measuring frequency (Hz)": 9849600000.0,
+            "Readout duration (s)": 1.2e-05,
+            "Readout fidelity (RB)": 0.7876,
+            "Fidelity readout": 0.7876,
+            "T1 error (s)": 1.2349e-05,
+            "T2 error (s)": 64.681
+        },
+        "q[8]": {
+            "T1 (s)": 5.6679e-06,
+            "T2 (s)": 6.0583e-05,
+            "Drive Frequency (Hz)": 4281300000.0,
+            "Measuring frequency (Hz)": 9850900000.0,
+            "Readout duration (s)": 1.0676e-05,
+            "Readout fidelity (RB)": 0.8749,
+            "Fidelity readout": 0.8749,
+            "T1 error (s)": 1.2446e-05,
+            "T2 error (s)": 1.001e-05
+        },
+        "q[9]": {
+            "T1 (s)": 0.099879,
+            "T2 (s)": 0.00031508,
+            "Drive Frequency (Hz)": 4405800000.0,
+            "Measuring frequency (Hz)": 10078000000.0,
+            "Readout duration (s)": 7.9825e-06,
+            "Readout fidelity (RB)": 0.8943,
+            "Fidelity readout": 0.8943,
+            "T1 error (s)": 980.18,
+            "T2 error (s)": 0.0003003
+        },
+        "q[10]": {
+            "T1 (s)": 5.8134e-06,
+            "T2 (s)": 0.00040143,
+            "Drive Frequency (Hz)": 4229100000.0,
+            "Measuring frequency (Hz)": 10286000000.0,
+            "Readout duration (s)": 1.2e-05,
+            "Readout fidelity (RB)": 0.9137,
+            "Fidelity readout": 0.9137,
+            "T1 error (s)": 1.1084e-05,
+            "T2 error (s)": 0.00041069
+        },
+        "q[11]": {
+            "T1 (s)": 0.30196,
+            "T2 (s)": 0.52948,
+            "Drive Frequency (Hz)": 4350800000.0,
+            "Measuring frequency (Hz)": 9644100000.0,
+            "Readout duration (s)": 9.1887e-06,
+            "Readout fidelity (RB)": 0.9189,
+            "Fidelity readout": 0.9189,
+            "T1 error (s)": 5933.0,
+            "T2 error (s)": 154.27
+        },
+        "q[12]": {
+            "T1 (s)": 0.28242,
+            "T2 (s)": 0.00010462,
+            "Drive Frequency (Hz)": 4263000000.0,
+            "Measuring frequency (Hz)": 10071000000.0,
+            "Readout duration (s)": 5.3809e-06,
+            "Readout fidelity (RB)": 0.9382,
+            "Fidelity readout": 0.9382,
+            "T1 error (s)": 2699.2,
+            "T2 error (s)": 2.9915e-05
+        },
+        "q[13]": {
+            "T1 (s)": 0.4799,
+            "T2 (s)": 5.6535e-05,
+            "Drive Frequency (Hz)": 4391100000.0,
+            "Measuring frequency (Hz)": 10268000000.0,
+            "Readout duration (s)": 5.968e-06,
+            "Readout fidelity (RB)": 0.8061,
+            "Fidelity readout": 0.8061,
+            "T1 error (s)": 249090.0,
+            "T2 error (s)": 9.9556e-06
+        },
+        "q[14]": {
+            "T1 (s)": 1.7059e-05,
+            "T2 (s)": 8.0467e-05,
+            "Drive Frequency (Hz)": 4397200000.0,
+            "Measuring frequency (Hz)": 9852700000.0,
+            "Readout duration (s)": 1.4604e-05,
+            "Readout fidelity (RB)": 0.8756,
+            "Fidelity readout": 0.8756,
+            "T1 error (s)": 4.2582e-05,
+            "T2 error (s)": 1.8224e-05
+        },
+        "q[15]": {
+            "T1 (s)": 0.29741,
+            "T2 (s)": 0.00016379,
+            "Drive Frequency (Hz)": 4359800000.0,
+            "Measuring frequency (Hz)": 9653500000.0,
+            "Readout duration (s)": 1.3455e-05,
+            "Readout fidelity (RB)": 0.9239,
+            "Fidelity readout": 0.9239,
+            "T1 error (s)": 15922.0,
+            "T2 error (s)": 4.6602e-05
+        },
+        "q[16]": {
+            "T1 (s)": 0.48394,
+            "T2 (s)": 0.00013508,
+            "Drive Frequency (Hz)": 4300900000.0,
+            "Measuring frequency (Hz)": 10284000000.0,
+            "Readout duration (s)": 4.9434e-06,
+            "Readout fidelity (RB)": 0.9454,
+            "Fidelity readout": 0.9454,
+            "T1 error (s)": 2957.7,
+            "T2 error (s)": 6.0484e-05
+        },
+        "q[17]": {
+            "T1 (s)": 1.055e-05,
+            "T2 (s)": 0.16551,
+            "Drive Frequency (Hz)": 4290900000.0,
+            "Measuring frequency (Hz)": 9854500000.0,
+            "Readout duration (s)": 1.8e-05,
+            "Readout fidelity (RB)": 0.5613,
+            "Fidelity readout": 0.5613,
+            "T1 error (s)": 1.3879e-05,
+            "T2 error (s)": 279.43
+        },
+        "q[18]": {
+            "T1 (s)": 3.167e-06,
+            "T2 (s)": 4.6686e-05,
+            "Drive Frequency (Hz)": 4303900000.0,
+            "Measuring frequency (Hz)": 10065000000.0,
+            "Readout duration (s)": 1.2633e-05,
+            "Readout fidelity (RB)": 0.7475,
+            "Fidelity readout": 0.7475,
+            "T1 error (s)": 5.1442e-06,
+            "T2 error (s)": 5.5869e-06
+        },
+        "q[19]": {
+            "T1 (s)": 1.7511e-05,
+            "T2 (s)": 0.00022181,
+            "Drive Frequency (Hz)": 4228900000.0,
+            "Measuring frequency (Hz)": 10278000000.0,
+            "Readout duration (s)": 4.9895e-06,
+            "Readout fidelity (RB)": 0.911,
+            "Fidelity readout": 0.911,
+            "T1 error (s)": 2.2405e-05,
+            "T2 error (s)": 0.00010025
+        },
+        "q[20]": {
+            "T1 (s)": 0.23052,
+            "T2 (s)": 5.6812e-05,
+            "Drive Frequency (Hz)": 4309800000.0,
+            "Measuring frequency (Hz)": 9636300000.0,
+            "Readout duration (s)": 6.981e-06,
+            "Readout fidelity (RB)": 0.9173,
+            "Fidelity readout": 0.9173,
+            "T1 error (s)": 2677.7,
+            "T2 error (s)": 5.7693e-06
+        },
+        "q[21]": {
+            "T1 (s)": 0.064139,
+            "T2 (s)": 5.3136e-05,
+            "Drive Frequency (Hz)": 4298100000.0,
+            "Measuring frequency (Hz)": 10067000000.0,
+            "Readout duration (s)": 4.955e-06,
+            "Readout fidelity (RB)": 0.9099,
+            "Fidelity readout": 0.9099,
+            "T1 error (s)": 490.76,
+            "T2 error (s)": 6.4233e-06
+        },
+        "q[22]": {
+            "T1 (s)": 0.13821,
+            "T2 (s)": 4.8273e-05,
+            "Drive Frequency (Hz)": 4393000000.0,
+            "Measuring frequency (Hz)": 10260000000.0,
+            "Readout duration (s)": 9.1221e-06,
+            "Readout fidelity (RB)": 0.9014,
+            "Fidelity readout": 0.9014,
+            "T1 error (s)": 3491.2,
+            "T2 error (s)": 9.1076e-06
+        },
+        "q[23]": {
+            "T1 (s)": 9.5213e-09,
+            "T2 (s)": -0.752,
+            "Drive Frequency (Hz)": 4377700000.0,
+            "Measuring frequency (Hz)": 9843900000.0,
+            "Readout duration (s)": 1.0055e-05,
+            "Readout fidelity (RB)": 0.8531,
+            "Fidelity readout": 0.8531,
+            "T1 error (s)": Infinity,
+            "T2 error (s)": 1450.1
+        },
+        "q[24]": {
+            "T1 (s)": 3.161e-05,
+            "T2 (s)": 3.4715e-05,
+            "Drive Frequency (Hz)": 4483400000.0,
+            "Measuring frequency (Hz)": 9648600000.0,
+            "Readout duration (s)": 1.4867e-05,
+            "Readout fidelity (RB)": 0.7245,
+            "Fidelity readout": 0.7245,
+            "T1 error (s)": 0.00012488,
+            "T2 error (s)": 4.617e-06
+        },
+        "q[25]": {
+            "T1 (s)": 0.19778,
+            "T2 (s)": 0.0011103,
+            "Drive Frequency (Hz)": 4450600000.0,
+            "Measuring frequency (Hz)": 10081000000.0,
+            "Readout duration (s)": 1.6e-05,
+            "Readout fidelity (RB)": 0.9284,
+            "Fidelity readout": 0.9284,
+            "T1 error (s)": 3563.6,
+            "T2 error (s)": 0.0024074
+        },
+        "q[26]": {
+            "T1 (s)": 3.4946e-06,
+            "T2 (s)": 0.00012097,
+            "Drive Frequency (Hz)": 4362200000.0,
+            "Measuring frequency (Hz)": 9645600000.0,
+            "Readout duration (s)": 1.1919e-05,
+            "Readout fidelity (RB)": 0.8728,
+            "Fidelity readout": 0.8728,
+            "T1 error (s)": 4.5169e-06,
+            "T2 error (s)": 4.1234e-05
+        },
+        "q[27]": {
+            "T1 (s)": 0.37428,
+            "T2 (s)": 7.9074e-05,
+            "Drive Frequency (Hz)": 4259600000.0,
+            "Measuring frequency (Hz)": 10250000000.0,
+            "Readout duration (s)": 4.8283e-06,
+            "Readout fidelity (RB)": 0.864,
+            "Fidelity readout": 0.864,
+            "T1 error (s)": 11689.0,
+            "T2 error (s)": 1.4381e-05
+        },
+        "q[28]": {
+            "T1 (s)": 2.0725e-05,
+            "T2 (s)": 0.00013019,
+            "Drive Frequency (Hz)": 4262400000.0,
+            "Measuring frequency (Hz)": 9847300000.0,
+            "Readout duration (s)": 1.2974e-05,
+            "Readout fidelity (RB)": 0.8755,
+            "Fidelity readout": 0.8755,
+            "T1 error (s)": 0.00013578,
+            "T2 error (s)": 4.4721e-05
+        },
+        "q[29]": {
+            "T1 (s)": -0.83732,
+            "T2 (s)": 7.6917e-05,
+            "Drive Frequency (Hz)": 4232500000.0,
+            "Measuring frequency (Hz)": 10057000000.0,
+            "Readout duration (s)": 9.502e-06,
+            "Readout fidelity (RB)": 0.8687,
+            "Fidelity readout": 0.8687,
+            "T1 error (s)": 12350.0,
+            "T2 error (s)": 2.2105e-05
+        },
+        "q[30]": {
+            "T1 (s)": 0.41749,
+            "T2 (s)": 8.8273e-05,
+            "Drive Frequency (Hz)": 4283600000.0,
+            "Measuring frequency (Hz)": 10255000000.0,
+            "Readout duration (s)": 9.6286e-06,
+            "Readout fidelity (RB)": 0.8879,
+            "Fidelity readout": 0.8879,
+            "T1 error (s)": 8621.9,
+            "T2 error (s)": 1.6524e-05
+        },
+        "q[31]": {
+            "T1 (s)": 0.29978,
+            "T2 (s)": 4.7103e-05,
+            "Drive Frequency (Hz)": 4167100000.0,
+            "Measuring frequency (Hz)": 9625700000.0,
+            "Readout duration (s)": 1.2e-05,
+            "Readout fidelity (RB)": 0.8888,
+            "Fidelity readout": 0.8888,
+            "T1 error (s)": 3587.5,
+            "T2 error (s)": 1.1434e-05
+        }
+    },
+    "Q1Gates": {
+        "q[0]": {
+            "SX": {
+                "Gate duration (s)": 6.4e-08,
+                "Fidelity(RB)": 0.9945,
+                "Fidelity error": 0.00059737
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[1]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99897,
+                "Fidelity error": 0.00024282
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[2]": {
+            "SX": {
+                "Gate duration (s)": 9.6e-08,
+                "Fidelity(RB)": 0.99149,
+                "Fidelity error": 0.00043907
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[3]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99805,
+                "Fidelity error": 0.00033172
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[4]": {
+            "SX": {
+                "Gate duration (s)": 6.4e-08,
+                "Fidelity(RB)": 0.9997,
+                "Fidelity error": 0.00017744
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[5]": {
+            "SX": {
+                "Gate duration (s)": 9.6e-08,
+                "Fidelity(RB)": 0.99702,
+                "Fidelity error": 0.00019818
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[6]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99945,
+                "Fidelity error": 0.00022
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[7]": {
+            "SX": {
+                "Gate duration (s)": 1.28e-07,
+                "Fidelity(RB)": 0.98167,
+                "Fidelity error": 0.0014033
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[8]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99911,
+                "Fidelity error": 0.00026263
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[9]": {
+            "SX": {
+                "Gate duration (s)": 1.28e-07,
+                "Fidelity(RB)": 0.99029,
+                "Fidelity error": 0.00065515
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[10]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99976,
+                "Fidelity error": 0.0002923
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[11]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99865,
+                "Fidelity error": 0.00028618
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[12]": {
+            "SX": {
+                "Gate duration (s)": 9.6e-08,
+                "Fidelity(RB)": 0.99837,
+                "Fidelity error": 0.00018124
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[13]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99186,
+                "Fidelity error": 0.00080013
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[14]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.9983,
+                "Fidelity error": 0.00033389
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[15]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99979,
+                "Fidelity error": 0.00014725
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[16]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99987,
+                "Fidelity error": 0.00019229
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[17]": {
+            "SX": {
+                "Gate duration (s)": 1.28e-07,
+                "Fidelity(RB)": 0.99024,
+                "Fidelity error": 0.005266
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[18]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99399,
+                "Fidelity error": 0.00083459
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[19]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99961,
+                "Fidelity error": 0.00023333
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[20]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99943,
+                "Fidelity error": 0.00033795
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[21]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99837,
+                "Fidelity error": 0.00028427
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[22]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99955,
+                "Fidelity error": 0.00026202
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[23]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99966,
+                "Fidelity error": 0.00044916
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[24]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.98826,
+                "Fidelity error": 0.0016595
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[25]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99957,
+                "Fidelity error": 0.00020026
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[26]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99714,
+                "Fidelity error": 0.00056989
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[27]": {
+            "SX": {
+                "Gate duration (s)": 9.6e-08,
+                "Fidelity(RB)": 0.99501,
+                "Fidelity error": 0.00072907
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[28]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.985,
+                "Fidelity error": 0.0026553
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[29]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99715,
+                "Fidelity error": 0.00028114
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[30]": {
+            "SX": {
+                "Gate duration (s)": 9.6e-08,
+                "Fidelity(RB)": 0.99781,
+                "Fidelity error": 0.00033626
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        },
+        "q[31]": {
+            "SX": {
+                "Gate duration (s)": 3.2e-08,
+                "Fidelity(RB)": 0.99926,
+                "Fidelity error": 0.00067802
+            },
+            "Rz": {
+                "Gate duration (s)": 0,
+                "Fidelity(RB)": 1.0
+            }
+        }
+    },
+    "Q2Gates(RB)": {
+        "0-1": {
+            "ECR": {
+                "Control": 0,
+                "Target": 1,
+                "Duration (s)": 4.16e-07,
+                "Fidelity(RB)": 0.97936,
+                "Fidelity error": 0.0010516
+            }
+        },
+        "2-1": {
+            "ECR": {
+                "Control": 2,
+                "Target": 1,
+                "Duration (s)": 7.68e-07,
+                "Fidelity(RB)": 0.96748,
+                "Fidelity error": 0.0014397
+            }
+        },
+        "2-3": {
+            "ECR": {
+                "Control": 2,
+                "Target": 3,
+                "Duration (s)": 7.68e-07,
+                "Fidelity(RB)": 0.94371,
+                "Fidelity error": 0.003689
+            }
+        },
+        "4-3": {
+            "ECR": {
+                "Control": 4,
+                "Target": 3,
+                "Duration (s)": 4.16e-07,
+                "Fidelity(RB)": 0.97966,
+                "Fidelity error": 0.0010079
+            }
+        },
+        "5-4": {
+            "ECR": {
+                "Control": 5,
+                "Target": 4,
+                "Duration (s)": 5.44e-07,
+                "Fidelity(RB)": 0.97301,
+                "Fidelity error": 0.00055572
+            }
+        },
+        "6-3": {
+            "ECR": {
+                "Control": 6,
+                "Target": 3,
+                "Duration (s)": 5.92e-07,
+                "Fidelity(RB)": 0.0,
+                "Fidelity error": 0.5
+            }
+        },
+        "6-12": {
+            "ECR": {
+                "Control": 6,
+                "Target": 12,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.97454,
+                "Fidelity error": 0.0020519
+            }
+        },
+        "7-0": {
+            "ECR": {
+                "Control": 7,
+                "Target": 0,
+                "Duration (s)": 5.44e-07,
+                "Fidelity(RB)": 0.76025,
+                "Fidelity error": 0.03093
+            }
+        },
+        "7-9": {
+            "ECR": {
+                "Control": 7,
+                "Target": 9,
+                "Duration (s)": 6.72e-07,
+                "Fidelity(RB)": 0.87462,
+                "Fidelity error": 0.036985
+            }
+        },
+        "9-10": {
+            "ECR": {
+                "Control": 9,
+                "Target": 10,
+                "Duration (s)": 6.24e-07,
+                "Fidelity(RB)": 0.8715,
+                "Fidelity error": 0.087372
+            }
+        },
+        "11-10": {
+            "ECR": {
+                "Control": 11,
+                "Target": 10,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.98505,
+                "Fidelity error": 0.00071469
+            }
+        },
+        "11-12": {
+            "ECR": {
+                "Control": 11,
+                "Target": 12,
+                "Duration (s)": 4.16e-07,
+                "Fidelity(RB)": 0.9797,
+                "Fidelity error": 0.0012157
+            }
+        },
+        "13-21": {
+            "ECR": {
+                "Control": 13,
+                "Target": 21,
+                "Duration (s)": 4.48e-07,
+                "Fidelity(RB)": 0.89315,
+                "Fidelity error": 0.012399
+            }
+        },
+        "14-11": {
+            "ECR": {
+                "Control": 14,
+                "Target": 11,
+                "Duration (s)": 3.2e-07,
+                "Fidelity(RB)": 0.9894,
+                "Fidelity error": 0.00046821
+            }
+        },
+        "14-18": {
+            "ECR": {
+                "Control": 14,
+                "Target": 18,
+                "Duration (s)": 4.96e-07,
+                "Fidelity(RB)": 0.90667,
+                "Fidelity error": 0.016987
+            }
+        },
+        "15-8": {
+            "ECR": {
+                "Control": 15,
+                "Target": 8,
+                "Duration (s)": 6.4e-07,
+                "Fidelity(RB)": 0.97487,
+                "Fidelity error": 0.00088407
+            }
+        },
+        "15-16": {
+            "ECR": {
+                "Control": 15,
+                "Target": 16,
+                "Duration (s)": 6.4e-07,
+                "Fidelity(RB)": 0.96538,
+                "Fidelity error": 0.0020904
+            }
+        },
+        "18-17": {
+            "ECR": {
+                "Control": 18,
+                "Target": 17,
+                "Duration (s)": 4e-07,
+                "Fidelity(RB)": 0.89193,
+                "Fidelity error": 0.28142
+            }
+        },
+        "18-19": {
+            "ECR": {
+                "Control": 18,
+                "Target": 19,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.97307,
+                "Fidelity error": 0.0019813
+            }
+        },
+        "20-19": {
+            "ECR": {
+                "Control": 20,
+                "Target": 19,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.98993,
+                "Fidelity error": 0.0016169
+            }
+        },
+        "22-21": {
+            "ECR": {
+                "Control": 22,
+                "Target": 21,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.98291,
+                "Fidelity error": 0.00082803
+            }
+        },
+        "22-31": {
+            "ECR": {
+                "Control": 22,
+                "Target": 31,
+                "Duration (s)": 6.4e-07,
+                "Fidelity(RB)": 0.97715,
+                "Fidelity error": 0.0012003
+            }
+        },
+        "23-20": {
+            "ECR": {
+                "Control": 23,
+                "Target": 20,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.97009,
+                "Fidelity error": 0.0037317
+            }
+        },
+        "23-30": {
+            "ECR": {
+                "Control": 23,
+                "Target": 30,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.93761,
+                "Fidelity error": 0.003933
+            }
+        },
+        "24-17": {
+            "ECR": {
+                "Control": 24,
+                "Target": 17,
+                "Duration (s)": 6.72e-07,
+                "Fidelity(RB)": 0.99991,
+                "Fidelity error": 0.1927
+            }
+        },
+        "24-27": {
+            "ECR": {
+                "Control": 24,
+                "Target": 27,
+                "Duration (s)": 7.04e-07,
+                "Fidelity(RB)": 0.92469,
+                "Fidelity error": 0.0056661
+            }
+        },
+        "25-16": {
+            "ECR": {
+                "Control": 25,
+                "Target": 16,
+                "Duration (s)": 3.52e-07,
+                "Fidelity(RB)": 0.98785,
+                "Fidelity error": 0.00063063
+            }
+        },
+        "25-26": {
+            "ECR": {
+                "Control": 25,
+                "Target": 26,
+                "Duration (s)": 4.16e-07,
+                "Fidelity(RB)": 0.97987,
+                "Fidelity error": 0.00087899
+            }
+        },
+        "26-27": {
+            "ECR": {
+                "Control": 26,
+                "Target": 27,
+                "Duration (s)": 6.72e-07,
+                "Fidelity(RB)": 0.97076,
+                "Fidelity error": 0.0016309
+            }
+        },
+        "28-27": {
+            "ECR": {
+                "Control": 28,
+                "Target": 27,
+                "Duration (s)": 6.4e-07,
+                "Fidelity(RB)": 0.86473,
+                "Fidelity error": 0.025095
+            }
+        },
+        "28-29": {
+            "ECR": {
+                "Control": 28,
+                "Target": 29,
+                "Duration (s)": 5.12e-07,
+                "Fidelity(RB)": 0.92102,
+                "Fidelity error": 0.0095741
+            }
+        },
+        "30-29": {
+            "ECR": {
+                "Control": 30,
+                "Target": 29,
+                "Duration (s)": 4.8e-07,
+                "Fidelity(RB)": 0.97943,
+                "Fidelity error": 0.0025023
+            }
+        },
+        "30-31": {
+            "ECR": {
+                "Control": 30,
+                "Target": 31,
+                "Duration (s)": 4.8e-07,
+                "Fidelity(RB)": 0.93503,
+                "Fidelity error": 0.0076795
+            }
+        }
+    }
+}

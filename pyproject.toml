@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0","wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "two-q-sep-cp"         # distribution name (can contain hyphen)
+version = "0.0.1"
+authors = [{name="Antonio Ruiz-Molero"}]
+dependencies = [
+    "bidict>=0.23.1,<1.0.0",
+    "chex>=0.1.87,<1.0.0",
+    "diffrax>=0.7.0,<1.0.0",
+    "equinox>=0.13.0,<1.0.0",
+    "jax>=0.7.1,<1.0.0",
+    "joblib>=1.4.2,<2.0.0",
+    "matplotlib>=3.10.6,<4.0.0",
+    "numpy>=2.3.2,<3.0.0",
+    "optax>=0.2.5,<1.0.0",
+    "pandas>=2.3.2,<3.0.0",
+    "qiskit>=1.3.1,<2.0.0",
+    "qutip>=5.1.1,<6.0.0",
+    "scikit_learn>=1.7.1,<2.0.0",
+    "scipy>=1.16.1,<2.0.0",
+    "orbax-checkpoint>=0.11.24"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
