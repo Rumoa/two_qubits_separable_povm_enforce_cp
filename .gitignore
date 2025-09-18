@@ -48,3 +48,4 @@ share/python-wheels/
 *.egg
 MANIFEST
 REDOING_SPAM_ESTIMATION.IPYNB
+job.sh
