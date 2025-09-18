@@ -10,10 +10,8 @@ import optax
 import orbax.checkpoint as ocp
 import wandb
 import wandb_osh
-from orbax.checkpoint.checkpoint_managers import LatestN
+from orbax.checkpoint.checkpoint_managers import LatestN, EveryNSteps
 from sklearn.model_selection import train_test_split
-from wandb_osh.hooks import TriggerWandbSyncHook
-
 from two_q_sep_cp.neural_ode.model import (
     LossWeights,
     SeparateLosses,
@@ -31,6 +29,7 @@ from two_q_sep_cp.neural_ode.utils import (
     make_data_loader,
     make_scheduler,
 )
+from wandb_osh.hooks import TriggerWandbSyncHook
 
 # from scalene import scalene_profiler
 
@@ -162,7 +161,9 @@ def main():
 
     abstract_structure = get_abstract_structure(model)
 
-    policy = LatestN(10)
+    # policy = LatestN(10)
+    # policy = PreserveAll()
+    policy = EveryNSteps(3)
 
     options = ocp.CheckpointManagerOptions(
         best_fn=lambda m: m["loss_test"],  # pick the metric to rank by
@@ -184,14 +185,14 @@ def main():
     trigger_sync = TriggerWandbSyncHook()
 
     run_name = Path(ckpt_path).name
-    wandb.init(
-        project="two_qubits_separable_cp",
-        config=config,
-        name=run_name,
-        save_code=True,
-        resume="allow",
-        mode="offline",
-    )
+    # wandb.init(
+    #     project="two_qubits_separable_cp",
+    #     config=config,
+    #     name=run_name,
+    #     save_code=True,
+    #     resume="allow",
+    #     mode="offline",
+    # )
     # ---------------------------------------------------------------------------- #
     #                                TRAINING STAGE                                #
     # ---------------------------------------------------------------------------- #
@@ -206,123 +207,144 @@ def main():
     train_loss_history = []
     test_loss_history = []
     global_step_counter = 0
-    with checkpoint_manager as mngr:
-        best_step = checkpoint_manager.best_step()
-        start_epoch = best_step + 1 if best_step is not None else 0
 
-        if best_step is not None:  # check if it exists a previous save
-            restored = mngr.restore(
-                step=best_step,
-                args=ocp.args.Composite(
-                    model_state=ocp.args.StandardRestore(abstract_structure),
-                    opt_state=ocp.args.StandardRestore(opt_state),
-                ),
-            )
-            model = build_restored_model(model, restored["model_state"])
-            opt_state = restored["opt_state"]
+    with wandb.init(
+        project="two_qubits_separable_cp",
+        config=config,
+        name=run_name,
+        save_code=True,
+        resume="allow",
+        mode="offline",
+    ) as wandb_run:
+        with checkpoint_manager as mngr:
+            best_step = checkpoint_manager.best_step()
+            start_epoch = best_step + 1 if best_step is not None else 0
 
-        for epoch in range(start_epoch, N_EPOCHS):
-            # epoch_train_loss = 0.0
-            # epoch_test_loss = 0.0
+            if best_step is not None:  # check if it exists a previous save
+                restored = mngr.restore(
+                    step=best_step,
+                    args=ocp.args.Composite(
+                        model_state=ocp.args.StandardRestore(abstract_structure),
+                        opt_state=ocp.args.StandardRestore(opt_state),
+                    ),
+                )
+                model = build_restored_model(model, restored["model_state"])
+                opt_state = restored["opt_state"]
 
-            epoch_train_loss = jnp.array(
-                0.0,
-            )
+            for epoch in range(start_epoch, N_EPOCHS):
+                # epoch_train_loss = 0.0
+                # epoch_test_loss = 0.0
 
-            epoch_train_separate_losses = SeparateLosses(jnp.array(0.0), jnp.array(0.0))
-
-            epoch_test_loss = jnp.array(0.0)
-
-            for step in range(max_iterations_per_epoch):
-                global_step_counter = global_step_counter + 1
-
-                x, y = next(train_loader)
-
-                model, opt_state, (step_train_loss, step_train_separate_losses) = (
-                    simple_update_step(
-                        model,
-                        opt_state,
-                        x,
-                        y,
-                        optimizer=optimizer,
-                        loss_weights=loss_weights,
-                        args_loss=args_loss,
-                    )
+                epoch_train_loss = jnp.array(
+                    0.0,
                 )
 
-                epoch_train_loss = epoch_train_loss + step_train_loss
-                epoch_train_separate_losses = (
-                    epoch_train_separate_losses + step_train_separate_losses
+                epoch_train_separate_losses = SeparateLosses(
+                    jnp.array(0.0), jnp.array(0.0)
                 )
 
-                if global_step_counter % n_update_loss_weights == 0:
-                    loss_weights = update_loss_weights(
-                        model, x, y, loss_weights, args_loss
+                epoch_test_loss = jnp.array(0.0)
+
+                for step in range(max_iterations_per_epoch):
+                    global_step_counter = global_step_counter + 1
+
+                    x, y = next(train_loader)
+
+                    model, opt_state, (step_train_loss, step_train_separate_losses) = (
+                        simple_update_step(
+                            model,
+                            opt_state,
+                            x,
+                            y,
+                            optimizer=optimizer,
+                            loss_weights=loss_weights,
+                            args_loss=args_loss,
+                        )
                     )
 
-            epoch_train_loss = epoch_train_loss / (step + 1)
-            epoch_train_separate_losses = epoch_train_separate_losses / (step + 1)
+                    epoch_train_loss = epoch_train_loss + step_train_loss
+                    epoch_train_separate_losses = (
+                        epoch_train_separate_losses + step_train_separate_losses
+                    )
 
-            epoch_test_loss, epoch_test_separate_losses = compute_loss_in_batches(
-                model, X_test, Y_test, loss_weights, args_loss, batch_size=BATCH_SIZE
-            )
+                    if global_step_counter % n_update_loss_weights == 0:
+                        print("Updaing weights...")
+                        loss_weights = update_loss_weights(
+                            model, x, y, loss_weights, args_loss
+                        )
 
-            train_loss_history.append(epoch_train_loss)
-            test_loss_history.append(epoch_test_loss)
+                epoch_train_loss = epoch_train_loss / (step + 1)
+                epoch_train_separate_losses = epoch_train_separate_losses / (step + 1)
 
-            metrics = {
-                "loss_test": float(epoch_test_loss),
-                "loss_train": float(epoch_train_loss),
-                "nll_loss_test": float(epoch_test_separate_losses.loss_nll),
-                "nll_loss_train": float(epoch_train_separate_losses.loss_nll),
-                "choi_loss_test": float(epoch_test_separate_losses.loss_choi),
-                "choi_loss_train": float(epoch_train_separate_losses.loss_choi),
-            }
+                epoch_test_loss, epoch_test_separate_losses = compute_loss_in_batches(
+                    model,
+                    X_test,
+                    Y_test,
+                    loss_weights,
+                    args_loss,
+                    batch_size=BATCH_SIZE,
+                )
 
-            wandb.log(
-                {
-                    "epoch": float(epoch),
+                train_loss_history.append(epoch_train_loss)
+                test_loss_history.append(epoch_test_loss)
+
+                metrics = {
                     "loss_test": float(epoch_test_loss),
                     "loss_train": float(epoch_train_loss),
                     "nll_loss_test": float(epoch_test_separate_losses.loss_nll),
                     "nll_loss_train": float(epoch_train_separate_losses.loss_nll),
                     "choi_loss_test": float(epoch_test_separate_losses.loss_choi),
                     "choi_loss_train": float(epoch_train_separate_losses.loss_choi),
+                    "weight_nll": float(loss_weights.w_nll),
+                    "weight_choi": float(loss_weights.w_cp),
                 }
-            )
-            trigger_sync()
 
-            mngr.save(
-                step=epoch,
-                args=ocp.args.Composite(
-                    model_state=ocp.args.StandardSave(
-                        eqx.partition(model, eqx.is_array)[0]
+                wandb_run.log(
+                    {
+                        "epoch": float(epoch),
+                        "loss_test": float(epoch_test_loss),
+                        "loss_train": float(epoch_train_loss),
+                        "nll_loss_test": float(epoch_test_separate_losses.loss_nll),
+                        "nll_loss_train": float(epoch_train_separate_losses.loss_nll),
+                        "choi_loss_test": float(epoch_test_separate_losses.loss_choi),
+                        "choi_loss_train": float(epoch_train_separate_losses.loss_choi),
+                        "weight_nll": float(loss_weights.w_nll),
+                        "weight_choi": float(loss_weights.w_cp),
+                    }
+                )
+                trigger_sync()
+
+                mngr.save(
+                    step=epoch,
+                    args=ocp.args.Composite(
+                        model_state=ocp.args.StandardSave(
+                            eqx.partition(model, eqx.is_array)[0]
+                        ),
+                        opt_state=ocp.args.StandardSave(opt_state),
                     ),
-                    opt_state=ocp.args.StandardSave(opt_state),
-                ),
-                metrics=metrics,
-            )
+                    metrics=metrics,
+                )
 
-            # print(
-            #     f"Epoch {epoch + 1}/{N_EPOCHS} | Train Loss: {epoch_train_loss:.4e}| Test Loss: {epoch_test_loss:.4e}"
-            # )
-        mngr.wait_until_finished()
+                # print(
+                #     f"Epoch {epoch + 1}/{N_EPOCHS} | Train Loss: {epoch_train_loss:.4e}| Test Loss: {epoch_test_loss:.4e}"
+                # )
+            mngr.wait_until_finished()
 
-    wandb.finish()
+    # wandb.finish()
 
     # scalene_profiler.stop()
 
 
-# if __name__ == "__main__":
-#     main()
-
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        import traceback
+    main()
 
-        traceback.print_exc()
-        import sys
+# if __name__ == "__main__":
+#     try:
+#         main()
+#     except Exception as e:
+#         import traceback
 
-        sys.exit(1)
+#         traceback.print_exc()
+#         import sys
+
+#         sys.exit(1)
