@@ -839,12 +839,17 @@ class Setup:
     choi_projection: None
 
 
-def initialize_setup(config) -> Setup:
+def initialize_setup(config, spam_estimator="mean") -> Setup:
     spam_estimation = joblib.load(config["spam_estimation_path"])
-    rho_00_mean = spam_estimation["rhos"].mean(0)
-    povm_z_mean = spam_estimation["povms"].mean(0)
-    array_povms = make_complete_povms(povm_z_mean, array_two_qubits_measurements_gates)
-    array_rhos = make_all_density_matrices(rho_00_mean, array_two_qubits_states_gates)
+    if spam_estimation == "mean":
+        rho_00 = spam_estimation["rhos"].mean(0)
+        povm_z = spam_estimation["povms"].mean(0)
+    if spam_estimation == "mle":
+        rho_00 = spam_estimation["rho_mle"]
+        povm_z = spam_estimation["povms_mle"]
+
+    array_povms = make_complete_povms(povm_z, array_two_qubits_measurements_gates)
+    array_rhos = make_all_density_matrices(rho_00, array_two_qubits_states_gates)
     normalized_hermitian_basis = make_hermitian_basis(n_qubits=2)
     bloch2d = Bloch2D(normalized_hermitian_basis)
     initial_states = InitialStates(array_rhos)

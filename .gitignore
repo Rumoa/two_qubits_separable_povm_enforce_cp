@@ -52,3 +52,5 @@ share/python-wheels/
 MANIFEST
 REDOING_SPAM_ESTIMATION.IPYNB
 job.sh
+problematic.pdf
+transpiled_circuits_6_10.qpy
