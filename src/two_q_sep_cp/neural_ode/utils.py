@@ -841,10 +841,10 @@ class Setup:
 
 def initialize_setup(config, spam_estimator="mean") -> Setup:
     spam_estimation = joblib.load(config["spam_estimation_path"])
-    if spam_estimation == "mean":
+    if spam_estimator == "mean":
         rho_00 = spam_estimation["rhos"].mean(0)
         povm_z = spam_estimation["povms"].mean(0)
-    if spam_estimation == "mle":
+    if spam_estimator == "mle":
         rho_00 = spam_estimation["rho_mle"]
         povm_z = spam_estimation["povms_mle"]
 

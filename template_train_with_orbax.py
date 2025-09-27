@@ -10,8 +10,10 @@ import optax
 import orbax.checkpoint as ocp
 import wandb
 import wandb_osh
-from orbax.checkpoint.checkpoint_managers import LatestN, EveryNSteps
+from orbax.checkpoint.checkpoint_managers import EveryNSteps, LatestN
 from sklearn.model_selection import train_test_split
+from wandb_osh.hooks import TriggerWandbSyncHook
+
 from two_q_sep_cp.neural_ode.model import (
     LossWeights,
     SeparateLosses,
@@ -29,7 +31,6 @@ from two_q_sep_cp.neural_ode.utils import (
     make_data_loader,
     make_scheduler,
 )
-from wandb_osh.hooks import TriggerWandbSyncHook
 
 # from scalene import scalene_profiler
 
@@ -95,7 +96,7 @@ def main():
     X[:, 2] = X[:, 2] / max_time
 
     if dataset_window_mask:
-        mask = X[:, 2] <= 0.4  # We are gonna learn only short times
+        mask = X[:, 2] <= dataset_window_mask  # We are gonna learn only short times
         X = X[mask]
 
         Y = Y[mask]
