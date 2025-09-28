@@ -1,5 +1,6 @@
 import math
 import operator
+from abc import abstractmethod
 from typing import Any, Callable
 
 import diffrax
@@ -30,7 +31,13 @@ def get_params(model):
     return eqx.filter(model, eqx.is_array)
 
 
-class LindbladNetTwoQubits(eqx.Module):
+class LindbladModelABC(eqx.Module):
+    @abstractmethod
+    def __call__(self, t) -> Parameters:
+        pass
+
+
+class LindbladNetTwoQubits(LindbladModelABC):
     dimension: int
     mlp: eqx.nn.MLP
     total_number_of_parameters: int
@@ -69,7 +76,7 @@ class LindbladNetTwoQubits(eqx.Module):
         return wrapped_parameters
 
 
-class FourierLindbladNetTwoQubits(eqx.Module):
+class FourierLindbladNetTwoQubits(LindbladModelABC):
     """MLP that takes time t (assumed normalized to (0,1]) and uses Fourier features."""
 
     dimension: int
@@ -374,7 +381,7 @@ class SineMLP(eqx.Module):
 #         return wrapped_parameters
 
 
-class RFLindbladNetTwoQubits(eqx.Module):
+class RFLindbladNetTwoQubits(LindbladModelABC):
     """
     Random Fourier Feature embedding for 1D time t:
       z(t) = sqrt(2/D) * cos(w * t + b)
@@ -463,7 +470,7 @@ class RFLindbladNetTwoQubits(eqx.Module):
             feats = jnp.concatenate([t, feats], axis=-1)  # (N, 1 + num_features)
         return feats
 
-    def __call__(self, t) -> "Parameters":
+    def __call__(self, t) -> Parameters:
         """
         t may be a scalar or a 1-element array. Returns Parameters for that single time.
         (If you want batched evaluation, vmap over this call.)
@@ -510,7 +517,7 @@ class RFLindbladNetTwoQubits(eqx.Module):
         return wrapped_parameters
 
 
-class SineLindbladNetTwoQubits(eqx.Module):
+class SineLindbladNetTwoQubits(LindbladModelABC):
     """SIREN-based Lindblad net compatible with your Parameters slicing."""
 
     dimension: int
@@ -539,7 +546,7 @@ class SineLindbladNetTwoQubits(eqx.Module):
         layer_sizes = [1] + [width_size] * depth + [self.total_number_of_parameters]
         self.mlp = SineMLP(key, layer_sizes=layer_sizes, omega_0=self.omega_0)
 
-    def __call__(self, t) -> "Parameters":
+    def __call__(self, t) -> Parameters:
         # t -> numeric, scale and forward
         t_arr = jnp.asarray(t, dtype=jnp.float64) * self.scaled_t
         emb = (
