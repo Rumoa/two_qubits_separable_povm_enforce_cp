@@ -10,7 +10,7 @@ import optax
 import orbax.checkpoint as ocp
 import wandb
 import wandb_osh
-from orbax.checkpoint.checkpoint_managers import EveryNSteps, LatestN
+from orbax.checkpoint.checkpoint_managers import EveryNSteps
 from sklearn.model_selection import train_test_split
 from wandb_osh.hooks import TriggerWandbSyncHook
 

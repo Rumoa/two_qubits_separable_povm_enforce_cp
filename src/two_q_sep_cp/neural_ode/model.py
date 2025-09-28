@@ -1,7 +1,7 @@
 import math
 import operator
 from abc import abstractmethod
-from typing import Any, Callable
+from typing import Any
 
 import diffrax
 import equinox as eqx
