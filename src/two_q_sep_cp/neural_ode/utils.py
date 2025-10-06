@@ -186,7 +186,7 @@ class InitialStates(eqx.Module):
         #     initial_states: Array of initial states, possibly noisy
         self.initial_states = initial_states
 
-    @jax.jit
+    # @jax.jit
     def get_rho_from_index(self, index: int) -> jnp.ndarray:
         # Return the density matrix at the given index
         # Args:
@@ -206,7 +206,8 @@ class POVMS(eqx.Module):
         #     povms: Array of POVMs, possibly noisy
         self.povms = povms
 
-    @jax.jit
+    # @jax.jit
+    # @eqx.filter_jit
     def get_povm_from_index(self, index: int) -> jnp.ndarray:
         # Return the POVM at the given index
         # Args:
@@ -251,6 +252,7 @@ def split_dataset(
     )  # state_index, basis_index
 
 
+# @eqx.filter_jit
 @jax.jit
 def compute_probability_from_rho_bloch_and_povms_bloch(
     rho_bloch: jnp.ndarray, povms_bloch: jnp.ndarray
@@ -267,6 +269,7 @@ def compute_probability_from_rho_bloch_and_povms_bloch(
     return result
 
 
+# @eqx.filter_jit
 @jax.jit
 def prepare_batch_for_ode(
     rhos_v: jnp.ndarray, povms_v: jnp.ndarray, times: jnp.ndarray
@@ -561,6 +564,7 @@ class LindbladGenerators(eqx.Module):
             self.dual_gens.A, (combinations, self.dimension**2, self.dimension**2)
         )
 
+    # @eqx.filter_jit
     @jax.jit
     def make_lindbladian(self, parameters: Parameters) -> Array:
         L = (
@@ -573,6 +577,7 @@ class LindbladGenerators(eqx.Module):
         # L = L + identity_part
         return L
 
+    # @eqx.filter_jit
     @jax.jit
     def from_lindbladian(self, lindbladian: ArrayLike) -> Parameters:
         """
@@ -625,6 +630,7 @@ class LindbladGenerators(eqx.Module):
 #     return update_matrix
 
 
+# @eqx.filter_jit
 @jax.jit
 def update_bloch_vector_from_parameters(
     bloch_vector, update_matrix, parameters: Parameters
