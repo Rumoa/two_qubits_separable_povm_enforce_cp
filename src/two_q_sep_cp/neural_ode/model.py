@@ -1,6 +1,7 @@
 import math
 import operator
 from abc import abstractmethod
+from functools import partial
 from typing import Any
 
 import diffrax
@@ -654,7 +655,7 @@ def evolve_map(
     solution = diffrax.diffeqsolve(
         term,
         solver,
-        t0=jnp.array(0),
+        t0=jnp.array(0.0),
         t1=ts[-1],
         y0=y0,
         args=ode_args,
@@ -684,7 +685,8 @@ def compute_choi_state_from_super_col(
     return choi_normalized
 
 
-@eqx.filter_jit
+# @eqx.filter_jit
+@partial(jax.jit, static_argnames="args")
 def project_choi_row(
     unphysical_choi_row: Complex[Array, " 16 16"], args: dict
 ) -> Complex[Array, " 16 16"]:
@@ -709,6 +711,9 @@ def compute_probability_from_choi(
     prob = (
         jnp.trace(jnp.kron(povm_element, rho.T) @ normalized_choi_state_row) * d
     ).real
+
+    # prob = jnp.nan_to_num(prob, nan=0.0, posinf=0.0, neginf=0.0)
+
     # We clip now the probabilities
     prob = jnp.clip(prob, min=1e-12, max=1)
     return prob
@@ -731,15 +736,27 @@ def compute_probability_from_choi_array_povms(
 # ---------------------------------------------------------------------------- #
 
 
+# def compute_distance_array_choi_matrices(
+#     array_unphysical_choi: Complex[Array, "d_batch 16 16"],
+#     array_projected_choi: Complex[Array, "d_batch 16 16"],
+# ) -> Float[Array, " d_batch"]:
+#     array_norms = jax.vmap(jnp.linalg.norm)(
+#         array_unphysical_choi - array_projected_choi
+#     )
+#     loss = jnp.mean(array_norms)
+#     return loss
+
+
 def compute_distance_array_choi_matrices(
     array_unphysical_choi: Complex[Array, "d_batch 16 16"],
     array_projected_choi: Complex[Array, "d_batch 16 16"],
 ) -> Float[Array, " d_batch"]:
-    array_norms = jax.vmap(jnp.linalg.norm)(
-        array_unphysical_choi - array_projected_choi
-    )
-    loss = jnp.mean(array_norms)
-    return loss
+    D = array_unphysical_choi - array_projected_choi
+    # per-sample squared Frobenius norm (real)
+    per_sample_sq = jnp.sum(jnp.abs(D) ** 2, axis=(1, 2)).real
+    # Return per-sample distances OR a single loss:
+    # return per_sample_sq           # per-sample
+    return per_sample_sq  # scalar loss
 
 
 def multinomial_nll_from_probs(predicted_probs, counts):
@@ -790,6 +807,28 @@ def weighted_multinomial_nll_from_probs(
 # compute_loss_and_grad = eqx.filter_value_and_grad(compute_loss)
 
 
+def make_physical_choi(choi, choi_projection):
+    """Checks if we need to project the choi matrix or it is already a valid
+    physical one
+
+    Args:
+        choi (_type_): _description_
+        choi_projection (_type_): _description_
+    """
+
+    def is_valid_choi(choi):
+        evals = jnp.linalg.eigh(choi)[0]
+        return ~((evals < 0).any())
+
+    def f_project(choi):
+        return choi_projection.dykstraCBA(choi, max_iter=3, tol=1e-3)
+
+    def f_dont_project(choi):
+        return choi
+
+    return jax.lax.cond(is_valid_choi(choi), f_dont_project, f_project, choi)
+
+
 @eqx.filter_jit
 def compute_separate_losses(
     model, X: Float[Array, "d_batch 3"], Y: Float[Array, "d_batch 4"], args
@@ -810,7 +849,6 @@ def compute_separate_losses(
     rhos_sorted, povms_sorted, times_sorted, idx_sort, inv_sort = prepare_batch_for_ode(
         rhos, povms, times
     )
-
     # Now we compute the evolved superoperator maps
 
     array_superop_hat_col = evolve_map(model, times_sorted, ode_args=args)
@@ -821,9 +859,14 @@ def compute_separate_losses(
         array_superop_hat_col
     )
 
-    array_projected_choi_row = jax.vmap(lambda choi_r: project_choi_row(choi_r, args))(
-        array_unphysical_choi_row
-    )
+    # array_projected_choi_row = jax.vmap(lambda choi_r: project_choi_row(choi_r, args))(
+    #     array_unphysical_choi_row
+    # )
+
+    # We check if the choi nees to be projected or not
+    array_physical_choi_row = jax.vmap(
+        lambda choi_r: make_physical_choi(choi_r, args["choi_projection"])
+    )(array_unphysical_choi_row)
 
     # Now we need to compute the probabilities for each state and povm for the given times
     # We need to be careful with the combinations of initial state povms and times
@@ -834,7 +877,7 @@ def compute_separate_losses(
 
     array_prob_hats_sorted = jax.vmap(
         compute_probability_from_choi_array_povms, in_axes=(0, 0, 0)
-    )(array_projected_choi_row, rhos_sorted, povms_sorted)
+    )(array_physical_choi_row, rhos_sorted, povms_sorted)
 
     # array_probs_hats_wrong_choi_sorted = jax.vmap(
     #     compute_probability_from_choi_array_povms, in_axes=(0, 0, 0)
@@ -860,11 +903,18 @@ def compute_separate_losses(
 
     # ---------------------------- LOSS CHOI MATRICES ---------------------------- #
 
-    array_distance_choi = jax.vmap(
-        compute_distance_array_choi_matrices, in_axes=(0, 0)
-    )(array_unphysical_choi_row, array_projected_choi_row)
-    loss_cp = jnp.mean(array_distance_choi)
+    # array_distance_choi = jax.vmap(
+    #     compute_distance_array_choi_matrices, in_axes=(0, 0)
+    # )(array_unphysical_choi_row, array_projected_choi_row)
+    # loss_cp = jnp.mean(array_distance_choi)
 
+    def distance_squared(a, b):
+        c = a - b
+        return jnp.trace(c @ c.conj().T).real
+
+    loss_cp = jax.vmap(distance_squared, in_axes=(0, 0))(
+        array_unphysical_choi_row, array_physical_choi_row
+    ).mean()
     return (
         loss_nll,
         loss_cp,
@@ -988,7 +1038,9 @@ class SeparateLosses(eqx.Module):
         )  # sums all leaves (works if leaves are scalars/arrays)
 
 
-def compute_loss(model, x, y, loss_weights: LossWeights, arg_loss):
+def compute_loss(
+    model, x, y, loss_weights: LossWeights, arg_loss
+) -> tuple[Array, SeparateLosses]:
     loss_nll, loss_choi = compute_separate_losses(model, x, y, arg_loss)
 
     loss = jnp.dot(loss_weights.weights, jnp.array([loss_nll, loss_choi]))
