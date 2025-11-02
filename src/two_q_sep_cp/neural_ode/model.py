@@ -3,7 +3,6 @@ import math
 from functools import partial
 from typing import Callable, Tuple
 
-import diffrax
 import equinox as eqx
 import jax
 import jax.numpy as jnp
