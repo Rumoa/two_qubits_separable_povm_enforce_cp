@@ -1,8 +1,7 @@
+import abc
 import math
-import operator
-from abc import abstractmethod
 from functools import partial
-from typing import Any
+from typing import Callable, Tuple
 
 import diffrax
 import equinox as eqx
@@ -17,8 +16,7 @@ from two_q_sep_cp.neural_ode.representations import (
     convert_col_row_super,
     from_super_to_choi,
 )
-
-from .utils import (
+from two_q_sep_cp.neural_ode.utils import (
     POVMS,
     InitialStates,
     LindbladGenerators,
@@ -32,13 +30,17 @@ def get_params(model):
     return eqx.filter(model, eqx.is_array)
 
 
-class LindbladModelABC(eqx.Module):
-    @abstractmethod
-    def __call__(self, t) -> Parameters:
-        pass
+class AbstractLindbladModel(eqx.Module):
+    @abc.abstractmethod
+    def __init__(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __call__(self, x) -> Parameters:
+        raise NotImplementedError
 
 
-class LindbladNetTwoQubits(LindbladModelABC):
+class LindbladNetTwoQubits(AbstractLindbladModel):
     dimension: int
     mlp: eqx.nn.MLP
     total_number_of_parameters: int
@@ -77,7 +79,7 @@ class LindbladNetTwoQubits(LindbladModelABC):
         return wrapped_parameters
 
 
-class FourierLindbladNetTwoQubits(LindbladModelABC):
+class FourierLindbladNetTwoQubits(AbstractLindbladModel):
     """MLP that takes time t (assumed normalized to (0,1]) and uses Fourier features."""
 
     dimension: int
@@ -254,135 +256,7 @@ class SineMLP(eqx.Module):
         return out
 
 
-# class RFLindbladNetTwoQubits(eqx.Module):
-#     """
-#     Random Fourier Feature embedding for 1D time t:
-#       z(t) = sqrt(2/D) * cos(w * t + b)
-#     where w ~ Normal(0, sigma^2) and b ~ Uniform(0, 2*pi).
-#     Optionally include raw t as an extra input dimension (stacked).
-#     """
-
-#     dimension: int
-#     mlp: eqx.nn.MLP
-#     total_number_of_parameters: int
-#     num_features: int
-#     sigma: float
-#     include_input: bool
-#     # train-time-constant random features (sampled at init)
-#     w: jnp.ndarray  # shape (num_features,)
-#     b: jnp.ndarray  # shape (num_features,)
-#     scale_pars: float
-#     scaled_t: float
-
-#     def __init__(
-#         self,
-#         key,
-#         width_size: int = 256,
-#         depth: int = 6,
-#         num_features: int = 128,
-#         sigma: float = 10.0,
-#         include_input: bool = True,
-#         scale_pars: float = 1.0,
-#         scaled_t: float = 1.0,
-#     ):
-#         # physics dims
-#         self.dimension = 4
-#         self.total_number_of_parameters = self.dimension**2 * (self.dimension**2 - 1)
-
-#         # embedding params
-#         self.num_features = int(num_features)
-#         self.sigma = float(sigma)
-#         self.include_input = bool(include_input)
-#         self.scale_pars = float(scale_pars)
-#         self.scaled_t = float(scaled_t)
-
-#         # sample random features once at init (deterministic thereafter)
-#         k_w, k_b, k_mlp = jax.random.split(key, 3)
-#         # w ~ Normal(0, sigma^2)
-#         self.w = jax.random.normal(k_w, (self.num_features,)) * self.sigma
-#         # random phase b ~ Uniform(0, 2pi)
-#         self.b = jax.random.uniform(k_b, (self.num_features,)) * (2.0 * jnp.pi)
-
-#         # embedding dimension: optionally raw t + num_features
-#         embed_dim = (1 if self.include_input else 0) + self.num_features
-
-#         # create MLP with input size = embedding dim, output size = number of parameters
-#         self.mlp = eqx.nn.MLP(
-#             in_size=embed_dim,
-#             out_size=self.total_number_of_parameters,
-#             width_size=width_size,
-#             depth=depth,
-#             key=k_mlp,
-#             activation=jax.nn.silu,
-#         )
-
-#     @staticmethod
-#     def _rff_time_embedding(
-#         t: jnp.ndarray, w: jnp.ndarray, b: jnp.ndarray, include_input: bool
-#     ):
-#         """
-#         t: shape (N,) or (,) values.
-#         w: shape (num_features,)
-#         b: shape (num_features,)
-#         returns: embeddings shape (N, embed_dim)
-#         """
-#         t = jnp.reshape(t, (-1, 1))  # (N,1)
-#         # Compute (N, num_features): broadcasting multiplication
-#         arg = t * w + b  # (N, num_features)
-#         # RFF single-cosine version (random-phase)
-#         feats = jnp.cos(arg)  # (N, num_features)
-#         # scale like sqrt(2/D) to keep variance ~1 for kernel approx
-#         feats = feats * jnp.sqrt(2.0 / w.shape[0])
-
-#         if include_input:
-#             feats = jnp.concatenate([t, feats], axis=-1)  # (N, 1 + num_features)
-#         return feats
-
-#     def __call__(self, t) -> "Parameters":
-#         """
-#         t may be a scalar or a 1-element array. Returns Parameters for that single time.
-#         (If you want batched evaluation, vmap over this call.)
-#         """
-#         # ensure JAX array and apply optional scaling
-#         t_arr = jnp.asarray(t, dtype=jnp.float32) * self.scaled_t
-
-#         # embedding returns shape (N, embed_dim); take first (and only) row
-#         # emb = self._rff_time_embedding(
-#         #     t_arr,
-#         #     jax.lax.stop_gradient(
-#         #         self.w
-#         #     ),  # <- because we don't want to train the rff embedding
-#         #     jax.lax.stop_gradient(
-#         #         self.b
-#         #     ),  # <- because we don't want to train the rff embedding
-#         #     self.include_input,
-#         # )[0]
-
-#         emb = self._rff_time_embedding(
-#             t_arr,
-#             (self.w),  # <- because we don't want to train the rff embedding
-#             (self.b),  # <- because we don't want to train the rff embedding
-#             self.include_input,
-#         )[0]
-
-#         # forward through MLP and scale outputs
-#         bare_output_parameters = self.mlp(emb) * self.scale_pars
-
-#         # slicing into parameter blocks (same as your original code)
-#         m = self.dimension**2 - 1
-#         combinations = m * (m - 1) // 2
-
-#         h_pars = bare_output_parameters[0:m]
-#         s_pars = bare_output_parameters[m : 2 * m]
-#         c_pars = bare_output_parameters[2 * m : 2 * m + combinations]
-#         a_pars = bare_output_parameters[2 * m + combinations :]
-
-#         wrapped_parameters = Parameters(self.dimension, h_pars, s_pars, c_pars, a_pars)
-
-#         return wrapped_parameters
-
-
-class RFLindbladNetTwoQubits(LindbladModelABC):
+class RFLindbladNetTwoQubits(AbstractLindbladModel):
     """
     Random Fourier Feature embedding for 1D time t:
       z(t) = sqrt(2/D) * cos(w * t + b)
@@ -518,7 +392,7 @@ class RFLindbladNetTwoQubits(LindbladModelABC):
         return wrapped_parameters
 
 
-class SineLindbladNetTwoQubits(LindbladModelABC):
+class SineLindbladNetTwoQubits(AbstractLindbladModel):
     """SIREN-based Lindblad net compatible with your Parameters slicing."""
 
     dimension: int
@@ -616,56 +490,30 @@ def make_model(config, key="architecture"):
 # ---------------------------------------------------------------------------- #
 
 
-def ode_master_eqn_map(
-    t: Float, superoperator: Complex[Array, " 16 16"], args
-) -> Complex[Array, " 16 16"]:
-    model = args["model"]
-    l_gens: LindbladGenerators = args["lindblad_generators"]
-
-    parameters_at_t: Parameters = model(t)  # parameters
-
-    # construct the lindbladian
-
-    lindbladian = l_gens.make_lindbladian(parameters_at_t)
-
-    superoperator_prime = lindbladian @ superoperator
-
-    return superoperator_prime
+class ArgsODE(eqx.Module):
+    model: AbstractLindbladModel
+    lindblad_generators: LindbladGenerators
 
 
-GLOBAL_ODE_SOLVER = diffrax.Tsit5()
-GLOBAL_ODE_TERM_MAP = diffrax.ODETerm(ode_master_eqn_map)
+# def ode_master_eqn_map(
+#     t: Float, superoperator: Complex[Array, " 16 16"], args
+# ) -> Complex[Array, " 16 16"]:
+#     model = args["model"]
+#     l_gens: LindbladGenerators = args["lindblad_generators"]
+
+#     parameters_at_t: Parameters = model(t)  # parameters
+
+#     # construct the lindbladian
+
+#     lindbladian = l_gens.make_lindbladian(parameters_at_t)
+
+#     superoperator_prime = lindbladian @ superoperator
+
+#     return superoperator_prime
 
 
-@eqx.filter_jit
-def evolve_map(
-    model, ts: Float[Array, " dim_batch"], ode_args: dict
-) -> Complex[Array, " dim_batch 16 16"]:
-    # Include the model in the args dictionary
-    ode_args["model"] = model
-    solver = GLOBAL_ODE_SOLVER
-    term = GLOBAL_ODE_TERM_MAP
-
-    # y0 is the identity map. for the case of two qubits, the superoperator has dimension 16x16
-
-    y0 = jnp.identity(16, dtype=jnp.complex128)
-
-    # stepsize_controller = PIDController(rtol=1e-9, atol=1e-12)
-
-    solution = diffrax.diffeqsolve(
-        term,
-        solver,
-        t0=jnp.array(0.0),
-        t1=ts[-1],
-        y0=y0,
-        args=ode_args,
-        dt0=0.001,
-        saveat=diffrax.SaveAt(ts=ts),
-    )
-    array_maps_superop_col_order = solution.ys
-    return (
-        array_maps_superop_col_order  # shape (n_times, 16, 16) dtype = jnp.complex128
-    )
+# GLOBAL_ODE_SOLVER = diffrax.Tsit5()
+# GLOBAL_ODE_TERM_MAP = diffrax.ODETerm(ode_master_eqn_map)
 
 
 @eqx.filter_jit
@@ -692,7 +540,9 @@ def project_choi_row(
 ) -> Complex[Array, " 16 16"]:
     choi_proj: ChoiProjection = args["choi_projection"]
 
-    projected_choi_row = choi_proj.dykstraCBA(unphysical_choi_row, max_iter=3, tol=1e-3)
+    projected_choi_row = choi_proj.dykstraCBA(
+        unphysical_choi_row, max_iter=4, tol=1e-4
+    )  # original one, we fixed max_iter = 3, tol=1e-3
     return projected_choi_row
 
 
@@ -731,20 +581,31 @@ def compute_probability_from_choi_array_povms(
     return jax.lax.scan(f_scan, init=jnp.array(0), xs=array_povms)[1]
 
 
+def make_physical_choi(choi, choi_projection):
+    """Checks if we need to project the choi matrix or it is already a valid
+    physical one
+
+    Args:
+        choi (_type_): _description_
+        choi_projection (_type_): _description_
+    """
+
+    def is_valid_choi(choi):
+        evals = jnp.linalg.eigh(choi)[0]
+        return ~((evals < 0).any())
+
+    def f_project(choi):
+        return choi_projection.dykstraCBA(choi, max_iter=3, tol=1e-3)
+
+    def f_dont_project(choi):
+        return choi
+
+    return jax.lax.cond(is_valid_choi(choi), f_dont_project, f_project, choi)
+
+
 # ---------------------------------------------------------------------------- #
 #                                LOSS FUNCTIONS                                #
 # ---------------------------------------------------------------------------- #
-
-
-# def compute_distance_array_choi_matrices(
-#     array_unphysical_choi: Complex[Array, "d_batch 16 16"],
-#     array_projected_choi: Complex[Array, "d_batch 16 16"],
-# ) -> Float[Array, " d_batch"]:
-#     array_norms = jax.vmap(jnp.linalg.norm)(
-#         array_unphysical_choi - array_projected_choi
-#     )
-#     loss = jnp.mean(array_norms)
-#     return loss
 
 
 def compute_distance_array_choi_matrices(
@@ -775,6 +636,7 @@ def weighted_multinomial_nll_from_probs(
     - `weight_floor` is the desired weight at t = max(times), i.e. w(t_max)=weight_floor.
     - If `gamma_override` is finite (not NaN), it is used directly; otherwise gamma is computed
       so that w(t_max)=weight_floor.
+      gamma_override=0 disables weighting
     All branching is done with JAX ops (jnp.where / jnp.isfinite) so this is jittable.
     """
     # per-sample NLL
@@ -784,63 +646,68 @@ def weighted_multinomial_nll_from_probs(
     )
 
     # normalize times shape to (N,)
+
     times = jnp.reshape(jnp.asarray(times), (-1,))
 
-    # compute gamma that gives w(tmax)=weight_floor: gamma = -ln(weight_floor)/tmax
-    tmax = jnp.max(times)
-    # avoid division-by-zero: if tmax == 0 -> set denom to 1 (we then set gamma=0 via where)
-    denom = jnp.where(tmax <= 0.0, 1.0, tmax)
-    gamma_calc = -jnp.log(jnp.asarray(weight_floor)) / denom
-    # if all times are zero, set gamma to 0
-    gamma_calc = jnp.where(tmax <= 0.0, 0.0, gamma_calc)
+    def f_to_weight(operand):
+        times, _ = operand
+        tmax = jnp.max(times)
 
-    # use override if provided (must pass a numeric; pass jnp.nan to skip)
-    gamma = jnp.where(
-        jnp.isfinite(jnp.asarray(gamma_override)), gamma_override, gamma_calc
+        # avoid division-by-zero: if tmax == 0 -> set denom to 1 (we then set gamma=0 via where)
+        denom = jnp.where(tmax <= 0.0, 1.0, tmax)
+        gamma_calc = -jnp.log(jnp.asarray(weight_floor)) / denom
+        # if all times are zero, set gamma to 0
+        gamma_calc = jnp.where(tmax <= 0.0, 0.0, gamma_calc)
+        return jnp.array(gamma_calc, dtype=jnp.float64)
+
+    def f_to_use_gamma(operand):
+        _, gamma_override = operand
+        gamma = gamma_override
+        return jnp.array(gamma, dtype=jnp.float64)
+
+    gamma = jax.lax.cond(
+        jnp.isfinite(jnp.asarray(gamma_override)),
+        f_to_use_gamma,
+        f_to_weight,
+        operand=(times, gamma_override),
     )
+
+    # # compute gamma that gives w(tmax)=weight_floor: gamma = -ln(weight_floor)/tmax
+
+    # # use override if provided (must pass a numeric; pass jnp.nan to skip)
+    # gamma = jnp.where(
+    #     jnp.isfinite(jnp.asarray(gamma_override)), gamma_override, gamma_calc
+    # )
 
     weights = jnp.exp(-gamma * times)  # shape (N,)
 
     return nll, weights
 
 
-# compute_loss_and_grad = eqx.filter_value_and_grad(compute_loss)
+class StaticSetup(eqx.Module):
+    initial_states: InitialStates
+    povms: POVMS
+    lindblad_gens: LindbladGenerators
+    choi_projection: ChoiProjection
+    evolve_map_fn: Callable
 
 
-def make_physical_choi(choi, choi_projection):
-    """Checks if we need to project the choi matrix or it is already a valid
-    physical one
-
-    Args:
-        choi (_type_): _description_
-        choi_projection (_type_): _description_
-    """
-
-    def is_valid_choi(choi):
-        evals = jnp.linalg.eigh(choi)[0]
-        return ~((evals < 0).any())
-
-    def f_project(choi):
-        return choi_projection.dykstraCBA(choi, max_iter=3, tol=1e-3)
-
-    def f_dont_project(choi):
-        return choi
-
-    return jax.lax.cond(is_valid_choi(choi), f_dont_project, f_project, choi)
+class Intermediates(eqx.Module):
+    times: jax.Array
+    probs_hat: jax.Array
+    unphysical_choi: jax.Array
+    physical_choi: jax.Array
 
 
-@eqx.filter_jit
-def compute_separate_losses(
-    model, X: Float[Array, "d_batch 3"], Y: Float[Array, "d_batch 4"], args
-):
-    initial_states: InitialStates = args["initial_states"]
-    povms: POVMS = args["povms"]
-
-    # weight_floor = args.get("short_time_weight_floor", 0.1)
-    # gamma_override = args.get("short_time_gamma", jnp.nan)
+def compute_forward_and_intermediates(
+    model,
+    X,
+    static_objects: StaticSetup,
+) -> Intermediates:
+    initial_states: InitialStates = static_objects.initial_states
+    povms: POVMS = static_objects.povms
 
     # Get array of rhos, povms, and times
-
     rhos, povms, times = jax.vmap(
         lambda state: split_dataset(state, initial_states, povms)
     )(X)
@@ -849,9 +716,12 @@ def compute_separate_losses(
     rhos_sorted, povms_sorted, times_sorted, idx_sort, inv_sort = prepare_batch_for_ode(
         rhos, povms, times
     )
+
     # Now we compute the evolved superoperator maps
 
-    array_superop_hat_col = evolve_map(model, times_sorted, ode_args=args)
+    array_superop_hat_col = static_objects.evolve_map_fn(
+        model, times_sorted, lindblad_generators=static_objects.lindblad_gens
+    )
 
     # Now we compute the choi matrices of each map
 
@@ -859,13 +729,9 @@ def compute_separate_losses(
         array_superop_hat_col
     )
 
-    # array_projected_choi_row = jax.vmap(lambda choi_r: project_choi_row(choi_r, args))(
-    #     array_unphysical_choi_row
-    # )
-
     # We check if the choi nees to be projected or not
     array_physical_choi_row = jax.vmap(
-        lambda choi_r: make_physical_choi(choi_r, args["choi_projection"])
+        lambda choi_r: make_physical_choi(choi_r, static_objects.choi_projection)
     )(array_unphysical_choi_row)
 
     # Now we need to compute the probabilities for each state and povm for the given times
@@ -879,275 +745,204 @@ def compute_separate_losses(
         compute_probability_from_choi_array_povms, in_axes=(0, 0, 0)
     )(array_physical_choi_row, rhos_sorted, povms_sorted)
 
-    # array_probs_hats_wrong_choi_sorted = jax.vmap(
-    #     compute_probability_from_choi_array_povms, in_axes=(0, 0, 0)
-    # )(array_unphysical_choi_row, rhos_sorted, povms_sorted)
-
     # We need to give the original ordering back
-    array_prob_hats = array_prob_hats_sorted[inv_sort]
+    array_probs_hat = array_prob_hats_sorted[inv_sort]
 
-    # array_probs_hats_wrong_choi = array_probs_hats_wrong_choi_sorted[inv_sort]
+    times_original_order = times_sorted[inv_sort]
 
-    # --------------------------------- LOSS NLL --------------------------------- #
-    # negative_ll_array, weights = weighted_multinomial_nll_from_probs(
-    #     array_prob_hats,
-    #     Y,
-    #     times,  # original-order times
-    #     weight_floor=weight_floor,
-    #     gamma_override=gamma_override,
-    # )
+    intermediates = Intermediates(
+        times=times_original_order,
+        probs_hat=array_probs_hat,
+        unphysical_choi=array_unphysical_choi_row,
+        physical_choi=array_physical_choi_row,
+    )
+    return intermediates
 
-    # loss_nll = jnp.sum(negative_ll_array * weights) / jnp.sum(weights)
 
-    loss_nll = multinomial_nll_from_probs(array_prob_hats, Y).mean()
+# def compute_forward_and_intermediates(
+#     model,
+#     X,
+#     static_objects: StaticSetup,
+# ) -> Intermediates:
+#     initial_states: InitialStates = static_objects.initial_states
+#     povms: POVMS = static_objects.povms
 
-    # ---------------------------- LOSS CHOI MATRICES ---------------------------- #
+#     # Get array of rhos, povms, and times
+#     rhos, povms, times = jax.vmap(
+#         lambda state: split_dataset(state, initial_states, povms)
+#     )(X)
 
-    # array_distance_choi = jax.vmap(
-    #     compute_distance_array_choi_matrices, in_axes=(0, 0)
-    # )(array_unphysical_choi_row, array_projected_choi_row)
-    # loss_cp = jnp.mean(array_distance_choi)
+#     # sort them by time
+#     rhos_sorted, povms_sorted, times_sorted, idx_sort, inv_sort = prepare_batch_for_ode(
+#         rhos, povms, times
+#     )
+
+#     # Now we compute the evolved superoperator maps
+
+#     array_superop_hat_col = static_objects.evolve_map_fn(
+#         model, times_sorted, lindblad_generators=static_objects.lindblad_gens
+#     )
+
+#     # Now we compute the choi matrices of each map
+
+#     array_unphysical_choi_row = jax.vmap(compute_choi_state_from_super_col)(
+#         array_superop_hat_col
+#     )
+
+#     # We check if the choi nees to be projected or not
+#     array_physical_choi_row = jax.vmap(
+#         lambda choi_r: make_physical_choi(choi_r, static_objects.choi_projection)
+#     )(array_unphysical_choi_row)
+
+#     # Now we need to compute the probabilities for each state and povm for the given times
+#     # We need to be careful with the combinations of initial state povms and times
+
+#     # the good thing is that we have the tuple (rhos_sorted, povms_sorted and array_projected_choi_row)
+#     # where the order or the choi matrices is the same as the times, so we can just vmap
+#     # the only problem is that each element of the povm array has 4 elements, so we need to compute it accordingly.
+
+#     array_prob_hats_sorted = jax.vmap(
+#         compute_probability_from_choi_array_povms, in_axes=(0, 0, 0)
+#     )(array_physical_choi_row, rhos_sorted, povms_sorted)  # <- original one
+
+#     # We need to give the original ordering back
+#     array_probs_hat = array_prob_hats_sorted[inv_sort]
+
+#     times_original_order = times_sorted[inv_sort]
+
+#     intermediates = Intermediates(
+#         times=times_original_order,
+#         probs_hat=array_probs_hat,
+#         unphysical_choi=array_unphysical_choi_row,
+#         physical_choi=array_physical_choi_row,
+#     )
+#     return intermediates
+
+
+def loss_nll_from_probs(
+    prob_hats: jnp.ndarray, Y: jnp.ndarray, times: jnp.ndarray, arg_loss: dict
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    """Return scalar NLL (mean over batch) and per-example negative log-likelihoods"""
+    weight_floor = arg_loss.get("short_time_weight_floor", 0.1)
+    gamma_override = arg_loss.get("short_time_gamma", jnp.nan)
+    negative_ll_array, weights = weighted_multinomial_nll_from_probs(
+        prob_hats, Y, times, weight_floor=weight_floor, gamma_override=gamma_override
+    )
+    weighted_mean = (negative_ll_array * weights).mean()
+    return weighted_mean, negative_ll_array
+
+
+def loss_choi_distance(
+    unphys_choi: jnp.ndarray, phys_choi: jnp.ndarray
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    """Mean squared distance between unphysical and projected choi (scalar)"""
 
     def distance_squared(a, b):
         c = a - b
         return jnp.trace(c @ c.conj().T).real
 
-    loss_cp = jax.vmap(distance_squared, in_axes=(0, 0))(
-        array_unphysical_choi_row, array_physical_choi_row
-    ).mean()
-    return (
-        loss_nll,
-        loss_cp,
+    arr = jax.vmap(distance_squared, in_axes=(0, 0))(unphys_choi, phys_choi)
+    return arr.mean(), arr
+
+
+def compute_separate_losses(model, X, Y, static_objects: StaticSetup, arg_loss: dict):
+    intermediate = compute_forward_and_intermediates(model, X, static_objects)
+
+    loss_nll, _ = loss_nll_from_probs(
+        intermediate.probs_hat, Y, intermediate.times, arg_loss
+    )
+    loss_choi, _ = loss_choi_distance(
+        intermediate.unphysical_choi, intermediate.physical_choi
     )
 
-
-# class LossWeights(eqx.Module):
-#     weight_nll: jnp.array
-#     weight_choi: jnp.array
-
-
-class LossWeights(eqx.Module):
-    weights: jnp.array
-
-    def __init__(self, weights=jnp.array([1.0, 1.0], dtype=jnp.float64)):
-        self.weights = jnp.array(weights, dtype=jnp.float64)
-
-    @property
-    def w_nll(self):
-        return self.weights[0]
-
-    @property
-    def w_cp(self):
-        return self.weights[1]
-
-
-# class SeparateLosses(eqx.Module):
-#     loss_nll: Array
-#     loss_choi: Array
-
-#     def __add__(self, other):
-#         if isinstance(other, SeparateLosses):
-#             return SeparateLosses(
-#                 self.loss_nll + other.loss_nll,
-#                 self.loss_choi + other.loss_choi,
-#             )
-#         else:  # scalar or array
-#             return SeparateLosses(
-#                 self.loss_nll + other,
-#                 self.loss_choi + other,
-#             )
-
-#     def __radd__(self, other):
-#         return self.__add__(other)
-
-#     def __mul__(self, other):
-#         if isinstance(other, SeparateLosses):
-#             return SeparateLosses(
-#                 self.loss_nll * other.loss_nll,
-#                 self.loss_choi * other.loss_choi,
-#             )
-#         else:  # scalar or array
-#             return SeparateLosses(
-#                 self.loss_nll * other,
-#                 self.loss_choi * other,
-#             )
-
-#     def __rmul__(self, other):
-#         return self.__mul__(other)
-
-#     def __truediv__(self, other):
-#         if isinstance(other, SeparateLosses):
-#             return SeparateLosses(
-#                 self.loss_nll / other.loss_nll,
-#                 self.loss_choi / other.loss_choi,
-#             )
-#         else:
-#             return SeparateLosses(
-#                 self.loss_nll / other,
-#                 self.loss_choi / other,
-#             )
-
-
-class SeparateLosses(eqx.Module):
-    loss_nll: Array
-    loss_choi: Array
-
-    def _binary_op(self, other: Any, op):
-        # other is either the same pytree type, or a scalar/array
-        if isinstance(other, SeparateLosses):
-            return jax.tree_util.tree_map(lambda a, b: op(a, b), self, other)
-        # special-case for sum([...]) which starts with 0
-        if other == 0 and op is operator.add:
-            return self
-        return jax.tree_util.tree_map(lambda a: op(a, other), self)
-
-    # arithmetic operators
-    def __add__(self, other):
-        return self._binary_op(other, operator.add)
-
-    def __radd__(self, other):
-        if other == 0:  # support sum([...])
-            return self
-        return self._binary_op(other, operator.add)
-
-    def __sub__(self, other):
-        return self._binary_op(other, operator.sub)
-
-    def __rsub__(self, other):
-        # other - self  (if other is scalar/array)
-        if isinstance(other, SeparateLosses):
-            return other._binary_op(self, operator.sub)
-        return jax.tree_util.tree_map(lambda a: operator.sub(other, a), self)
-
-    def __mul__(self, other):
-        return self._binary_op(other, operator.mul)
-
-    def __rmul__(self, other):
-        return self._binary_op(other, operator.mul)
-
-    def __truediv__(self, other):
-        return self._binary_op(other, operator.truediv)
-
-    def __neg__(self):
-        return jax.tree_util.tree_map(lambda a: -a, self)
-
-    # optional convenience: sum of all fields
-    def total(self):
-        return sum(
-            jax.tree_leaves(self)
-        )  # sums all leaves (works if leaves are scalars/arrays)
+    losses = [loss_nll, loss_choi]
+    return jnp.array(losses)
 
 
 def compute_loss(
-    model, x, y, loss_weights: LossWeights, arg_loss
-) -> tuple[Array, SeparateLosses]:
-    loss_nll, loss_choi = compute_separate_losses(model, x, y, arg_loss)
+    model, X, Y, loss_weights, static_objects: StaticSetup, arg_loss: dict
+) -> tuple[Array, Array]:
+    losses_unweighted = compute_separate_losses(
+        model, X, Y, static_objects=static_objects, arg_loss=arg_loss
+    )
 
-    loss = jnp.dot(loss_weights.weights, jnp.array([loss_nll, loss_choi]))
-    # loss_aux_info = {}
-    # loss_aux_info["loss_nll"] = loss_nll
-    # loss_aux_info["loss_choi"] = loss_choi
+    loss = jnp.dot(loss_weights, losses_unweighted)
 
-    loss_aux_info = SeparateLosses(loss_nll, loss_choi)
-
-    return loss, loss_aux_info
+    return loss, losses_unweighted
 
 
-compute_grad_loss = eqx.filter_grad(
-    compute_loss, has_aux=True
-)  # -> this returns the grad and the aux
+# compute_grad_loss = eqx.filter_grad(
+#     compute_loss, has_aux=True
+# )  # -> this returns the grad and the aux
 compute_loss_and_grad = eqx.filter_value_and_grad(
     compute_loss, has_aux=True
 )  # -> this returns (loss, separate_losses), and the gradient
-compute_grads_separate_losses = eqx.filter_jacrev(
-    compute_separate_losses,
-)
+# compute_grads_separate_losses = eqx.filter_jacrev(
+#     compute_separate_losses,
+# )
+
+
+def filter_vgrad(f, x):
+    y, vjp_fn = eqx.filter_vjp(f, x)
+    return vjp_fn(jnp.ones(y.shape))[0]
 
 
 @eqx.filter_jit
-def update_loss_weights(model, x, y, loss_weights: LossWeights, args_loss):
-    grads_nll, grads_choi = compute_grads_separate_losses(model, x, y, args_loss)
+def update_loss_weights(model, x, y, loss_weights, static_objects, arg_loss):
+    y, vjp_fn = eqx.filter_vjp(
+        lambda m: compute_separate_losses(m, x, y, static_objects, arg_loss), model
+    )
+    n_losses = jnp.shape(y)[0]
 
-    norm_grads_nll = jnp.linalg.norm(jax.flatten_util.ravel_pytree(grads_nll)[0])
-    norm_grads_choi = jnp.linalg.norm(jax.flatten_util.ravel_pytree(grads_choi)[0])
+    grads_losses = [vjp_fn(e_i) for e_i in jnp.identity(n_losses)]
 
-    # add epsilon to prevent division by zero
-    eps = 1e-8
-    l_nll = (norm_grads_nll + norm_grads_choi) / (norm_grads_nll + eps)
-    l_choi = (norm_grads_nll + norm_grads_choi) / (norm_grads_choi + eps)
+    f_norm = lambda tree: jnp.linalg.norm(jax.flatten_util.ravel_pytree(tree)[0])
 
-    alpha = args_loss.get("loss_alpha", 0.9)
-    old_weights = loss_weights.weights
-    new_weights = alpha * old_weights + (1 - alpha) * jnp.array([l_nll, l_choi])
+    norms_of_grads = jnp.array([f_norm(grad_i) for grad_i in grads_losses])
 
-    return LossWeights(new_weights)
+    sum_of_norms = norms_of_grads.sum()
+    eps = 1e-10
+    new_weights_iteration = sum_of_norms / (norms_of_grads + eps)
 
+    alpha = arg_loss.get("loss_alpha", 0.9)
+    old_weights = loss_weights
+    new_weights = alpha * old_weights + (1 - alpha) * new_weights_iteration
 
-# def compute_loss_in_batches(model, X, Y, loss_weights, args, batch_size=1024):
-#     n = X.shape[0]
-#     total_loss = 0.0
-#     total_count = 0
-
-#     for start in range(0, n, batch_size):
-#         end = start + batch_size
-#         X_batch = X[start:end]
-#         Y_batch = Y[start:end]
-
-#         # Compute loss for this batch
-#         loss, _ = compute_loss(model, X_batch, Y_batch, loss_weights, args=args)
-#         total_loss += loss * X_batch.shape[0]  # weight by batch size
-#         total_count += X_batch.shape[0]
-
-#     return total_loss / total_count
+    return new_weights
 
 
 def compute_loss_in_batches(
-    model, X, Y, loss_weights, args, batch_size=1024
-) -> tuple[float, SeparateLosses]:
+    model, X, Y, loss_weights, static_objects, arg_loss, batch_size=1024
+):
     n = X.shape[0]
-    total_loss = 0.0
-    total_count = 0
-
-    total_separate_losses = SeparateLosses(jnp.array(0), jnp.array(0))
+    loss = []
+    losses_unweighted = []
 
     for start in range(0, n, batch_size):
         end = start + batch_size
         X_batch = X[start:end]
         Y_batch = Y[start:end]
 
-        # Compute loss for this batch
-        loss, separate_losses = compute_loss(
-            model, X_batch, Y_batch, loss_weights, args
+        loss_batch_i, losses_unweighted_batch_i = compute_loss(
+            model, X_batch, Y_batch, loss_weights, static_objects, arg_loss
         )
-        total_loss += loss * X_batch.shape[0]  # weight by batch size
-        total_count += X_batch.shape[0]
+        loss.append(loss_batch_i)
+        losses_unweighted.append(losses_unweighted_batch_i)
 
-        total_separate_losses = (
-            total_separate_losses + separate_losses * X_batch.shape[0]
-        )
-
-    return total_loss / total_count, total_separate_losses / total_count
+    loss = jnp.array(loss).mean(0)
+    losses_unweighted = jnp.array(losses_unweighted).mean(0)
+    return loss, losses_unweighted
 
 
 # # ---------------------------- EXAMPLE UPDATE STEP --------------------------- #
 
 
-# @eqx.filter_jit
-# def simple_update_step(model, opt_state, x, y, optimizer, args_loss):
-#     loss_value, grad_value = compute_loss_and_grad(model, x, y, args_loss)
-#     updates, opt_state = optimizer.update(
-#         grad_value, opt_state, eqx.filter(model, eqx.is_array)
-#     )
-#     model = eqx.apply_updates(model, updates)
-#     return model, opt_state, loss_value
-
-
 @eqx.filter_jit
-def simple_update_step(
-    model, opt_state, x, y, optimizer, loss_weights: LossWeights, args_loss
+def make_train_step(
+    model, x, y, loss_weights, opt_state, optimizer, static_objects, arg_loss
 ):
     (loss_value, separate_losses), grad_loss_value = compute_loss_and_grad(
-        model, x, y, loss_weights, args_loss
+        model, x, y, loss_weights, static_objects, arg_loss
     )
     updates, opt_state = optimizer.update(
         grad_loss_value, opt_state, eqx.filter(model, eqx.is_array)

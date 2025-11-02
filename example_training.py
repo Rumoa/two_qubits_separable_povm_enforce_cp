@@ -28,11 +28,11 @@ from two_q_sep_cp.neural_ode.utils import (
     InitialStates,
     LindbladGenerators,
     Parameters,
+    _make_generators_n_qubits,
+    _make_two_qubit_dual_generators,
     compute_probability_from_rho_bloch_and_povms_bloch,
     make_data_loader,
     make_hermitian_basis,
-    make_two_qubit_dual_generators,
-    make_two_qubit_generators,
     make_unnormalized_hermitian_basis,
     make_update_matrix_bloch,
     prepare_batch_for_ode,
@@ -104,9 +104,9 @@ povms = POVMS(array_povms)
 unnorm_herm_basis = make_unnormalized_hermitian_basis(n_qubits=2)
 dimension = 4
 
-H, S, C, A = make_two_qubit_generators(unnorm_herm_basis)
+H, S, C, A = _make_generators_n_qubits(unnorm_herm_basis)
 
-H_dual, S_dual, C_dual, A_dual = make_two_qubit_dual_generators(
+H_dual, S_dual, C_dual, A_dual = _make_two_qubit_dual_generators(
     unnorm_herm_basis, dim=dimension
 )
 

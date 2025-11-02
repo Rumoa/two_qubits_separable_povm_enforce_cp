@@ -1,9 +1,7 @@
 import json
 from importlib import resources
 
-import jax
 import jax.numpy as jnp
-import numpy as np
 import qutip as qt
 from qutip import gates
 

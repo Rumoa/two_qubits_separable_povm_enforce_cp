@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Tuple
 
 import chex
 import equinox as eqx
@@ -27,57 +27,78 @@ _norm_hermitian_basis = jnp.array(
     [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]]
 ) / jnp.sqrt(2)
 
+_PAULI_MATRICES = jnp.array(
+    [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]]
+)
+
 
 # ---------------------------------------------------------------------------- #
 #                                GENERATOR STUFF                               #
 # ---------------------------------------------------------------------------- #
-def make_hermitian_basis(n_qubits):
-    n_qubits = int(n_qubits)
+# def make_hermitian_basis(n_qubits):
+#     n_qubits = int(n_qubits)
 
-    if n_qubits == 1:
-        hermitian_basis = _norm_hermitian_basis
-    else:
-        list_of_prods = list(_norm_hermitian_basis)
-        for extra_qubit in range(1, n_qubits):
-            aux_list = []
-            for elem_prod_i in list_of_prods:
-                for pauli_i in _norm_hermitian_basis:
-                    aux_list.append(
-                        jnp.kron(
-                            elem_prod_i,
-                            pauli_i,
-                        )
-                    )
-            list_of_prods = aux_list
-        hermitian_basis = jnp.array(list_of_prods)
+#     if n_qubits == 1:
+#         hermitian_basis = _norm_hermitian_basis
+#     else:
+#         list_of_prods = list(_norm_hermitian_basis)
+#         for extra_qubit in range(1, n_qubits):
+#             aux_list = []
+#             for elem_prod_i in list_of_prods:
+#                 for pauli_i in _norm_hermitian_basis:
+#                     aux_list.append(
+#                         jnp.kron(
+#                             elem_prod_i,
+#                             pauli_i,
+#                         )
+#                     )
+#             list_of_prods = aux_list
+#         hermitian_basis = jnp.array(list_of_prods)
 
-    return hermitian_basis
+#     return hermitian_basis
 
 
-def make_unnormalized_hermitian_basis(n_qubits):
-    unnormalized_hermitian_basis = jnp.array(
+# def make_unnormalized_hermitian_basis(n_qubits):
+#     unnormalized_hermitian_basis = jnp.array(
+#         [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]]
+#     )
+
+#     n_qubits = int(n_qubits)
+#     if n_qubits == 1:
+#         hermitian_basis = unnormalized_hermitian_basis
+#     else:
+#         list_of_prods = list(unnormalized_hermitian_basis)
+#         for extra_qubit in range(1, n_qubits):
+#             aux_list = []
+#             for elem_prod_i in list_of_prods:
+#                 for pauli_i in unnormalized_hermitian_basis:
+#                     aux_list.append(
+#                         jnp.kron(
+#                             elem_prod_i,
+#                             pauli_i,
+#                         )
+#                     )
+#             list_of_prods = aux_list
+#         hermitian_basis = jnp.array(list_of_prods)
+
+#     return hermitian_basis
+
+
+@eqx.filter_jit
+def make_hermitian_basis(n_qubits, normalized=True):
+    _pauli_matrices = jnp.array(
         [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]]
     )
-
-    n_qubits = int(n_qubits)
-    if n_qubits == 1:
-        hermitian_basis = unnormalized_hermitian_basis
+    dim = int(2**n_qubits)
+    basis = _pauli_matrices
+    for qubit in range(1, n_qubits):
+        basis = jnp.kron(basis[:, None], _pauli_matrices[None, :]).reshape(
+            -1, int(2 ** (qubit + 1)), int(2 ** (qubit + 1))
+        )
+    if normalized:
+        return basis / jnp.sqrt(dim)
     else:
-        list_of_prods = list(unnormalized_hermitian_basis)
-        for extra_qubit in range(1, n_qubits):
-            aux_list = []
-            for elem_prod_i in list_of_prods:
-                for pauli_i in unnormalized_hermitian_basis:
-                    aux_list.append(
-                        jnp.kron(
-                            elem_prod_i,
-                            pauli_i,
-                        )
-                    )
-            list_of_prods = aux_list
-        hermitian_basis = jnp.array(list_of_prods)
-
-    return hermitian_basis
+        return basis
 
 
 # ------------------------------- BLOCH VECTOR ------------------------------- #
@@ -142,35 +163,35 @@ def make_unnormalized_hermitian_basis(n_qubits):
 #         return (parameters[:, None] * aux[:, :]).sum(0)
 
 
-class Bloch2D(eqx.Module):
-    # Hermitian basis for the Bloch representation
-    hermitian_basis: jnp.ndarray
+# class Bloch2D(eqx.Module):
+#     # Hermitian basis for the Bloch representation
+#     hermitian_basis: jnp.ndarray
 
-    def __init__(self, hermitian_basis: jnp.ndarray):
-        # Initialize the Bloch2D class with the given Hermitian basis
-        # Args:
-        #     hermitian_basis: Array of Hermitian basis elements
-        self.hermitian_basis = hermitian_basis
+#     def __init__(self, hermitian_basis: jnp.ndarray):
+#         # Initialize the Bloch2D class with the given Hermitian basis
+#         # Args:
+#         #     hermitian_basis: Array of Hermitian basis elements
+#         self.hermitian_basis = hermitian_basis
 
-    @jax.jit
-    def from_matrix_to_bloch(self, matrix: jnp.ndarray) -> jnp.ndarray:
-        # Convert a density matrix to a Bloch vector using the Hermitian basis
-        # Args:
-        #     matrix: Density matrix of shape (4, 4)
-        # Returns:
-        #     Bloch vector of shape (4,)
-        # The einsum operation contracts the indices of the Hermitian basis and the matrix
-        return jnp.einsum("iab,ba->i", self.hermitian_basis, matrix).real
+#     @jax.jit
+#     def from_matrix_to_bloch(self, matrix: jnp.ndarray) -> jnp.ndarray:
+#         # Convert a density matrix to a Bloch vector using the Hermitian basis
+#         # Args:
+#         #     matrix: Density matrix of shape (4, 4)
+#         # Returns:
+#         #     Bloch vector of shape (4,)
+#         # The einsum operation contracts the indices of the Hermitian basis and the matrix
+#         return jnp.einsum("iab,ba->i", self.hermitian_basis, matrix).real
 
-    @jax.jit
-    def from_bloch_to_matrix(self, bloch_vector: jnp.ndarray) -> jnp.ndarray:
-        # Convert a Bloch vector to a density matrix using the Hermitian basis
-        # Args:
-        #     bloch_vector: Bloch vector of shape (4,)
-        # Returns:
-        #     Density matrix of shape (4, 4)
-        # The sum operation combines the Hermitian basis elements weighted by the Bloch vector components
-        return jnp.sum(self.hermitian_basis * bloch_vector[:, None, None], axis=0)
+#     @jax.jit
+#     def from_bloch_to_matrix(self, bloch_vector: jnp.ndarray) -> jnp.ndarray:
+#         # Convert a Bloch vector to a density matrix using the Hermitian basis
+#         # Args:
+#         #     bloch_vector: Bloch vector of shape (4,)
+#         # Returns:
+#         #     Density matrix of shape (4, 4)
+#         # The sum operation combines the Hermitian basis elements weighted by the Bloch vector components
+#         return jnp.sum(self.hermitian_basis * bloch_vector[:, None, None], axis=0)
 
 
 # ----------------------- ENCAPSULATION STATES AND POVM ---------------------- #
@@ -276,12 +297,12 @@ def prepare_batch_for_ode(
 ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     # Prepare the batch of data for the ODE solver by sorting the data points by time
     # Args:
-    #     rhos_v: Array of shape (n, 4) containing the Bloch vectors of the initial states
-    #     povms_v: Array of shape (n, 4, 4) containing the Bloch vectors of the POVMs
+    #     rhos_v: Array of shape (n, 4) containing tthe initial states
+    #     povms_v: Array of shape (n, 4, 4) containing the  the POVMs
     #     times: Array of shape (n,) containing the time values
     # Returns:
-    #     rhos_v: Array of shape (n, 4) containing the sorted Bloch vectors of the initial states
-    #     povms_v: Array of shape (n, 4, 4) containing the sorted Bloch vectors of the POVMs
+    #     rhos_v: Array of shape (n, 4) containing the sorted  initial states
+    #     povms_v: Array of shape (n, 4, 4) containing the sorted  POVMs
     #     times: Array of shape (n,) containing the sorted time values
 
     # Get the indices that would sort the times array
@@ -321,7 +342,7 @@ class Parameters(eqx.Module):
         Args:
             d: Hilbert‐space dimension.
             H, S: 1D arrays of length m = d**2 - 1
-            C, A: 1D arrays of length comb = C(m, 2) = m*(m-1)//2
+            C, A: 1D arrays of length comb = C(m, 2) = m*(m-1)/2
         """
 
         self.dimension_matrix = jnp.identity(d)
@@ -374,6 +395,15 @@ class Parameters(eqx.Module):
             ]
         )
 
+    def inject_fn(self, fn):
+        generator_keys = ["H", "S", "C", "A"]
+        re = []
+        for field_id in generator_keys:
+            arr_i = self.__dict__[field_id]
+            qty = fn(arr_i)
+            re.append(qty)
+        return re
+
 
 # ---------------------------------------------------------------------------- #
 #                                GENERATOR STUFF                               #
@@ -411,8 +441,65 @@ def anticommutator(a, b):
     return a @ b + b @ a
 
 
-def make_two_qubit_generators(
-    unnormalized_hermitian_basis_one_qubit: jnp.ndarray,
+# def _make_two_qubit_generators(
+#     unnormalized_hermitian_basis_one_qubit: jnp.ndarray,
+# ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+#     # Generate the generators for the Lie algebra of the quantum operations
+#     # Args:
+#     #     unnormalized_hermitian_basis: Array of shape (4, 2, 2) containing the unnormalized Hermitian basis
+#     # Returns:
+#     #     H_generators: Array of shape (3, 2, 2) containing the generators for the Hamiltonian
+#     #     S_generators: Array of shape (3, 4, 4) containing the generators for the stochastic part
+#     #     C_generators: Array of shape (3, 4, 4) containing the generators for the coherent part
+#     #     A_generators: Array of shape (3, 4, 4) containing the generators for the anti-commutator part
+
+#     # Extract the identity and Pauli matrices from the unnormalized Hermitian basis
+#     id = unnormalized_hermitian_basis_one_qubit[0]
+#     pauli_basis_nonid = unnormalized_hermitian_basis_one_qubit[1:]
+
+#     # Generate the generators for the Hamiltonian
+#     H_generators = []
+#     for P in pauli_basis_nonid:
+#         H_generators.append(adjoint_op(P))
+#         # H_generators.append(
+#         #     -1j*
+#         # )
+#     H_generators = jnp.array(H_generators)
+
+#     # Generate the generators for the stochastic part
+#     S_generators = []
+#     for P in pauli_basis_nonid:
+#         S_generators.append(sprepost(P, P) - sprepost(id, id))
+#     S_generators = jnp.array(S_generators)
+
+#     # Generate the generators for the coherent part
+#     C_generators = []
+#     for P, Q in combinations(pauli_basis_nonid, 2):
+#         C_generators.append(
+#             sprepost(P, Q)
+#             + sprepost(Q, P)
+#             - 0.5 * (spre(anticommutator(P, Q)) + spost(anticommutator(P, Q)))
+#         )
+#     C_generators = jnp.array(C_generators)
+
+#     # Generate the generators for the anti-commutator part
+#     A_generators = []
+#     for P, Q in combinations(pauli_basis_nonid, 2):
+#         A_generators.append(
+#             1j
+#             * (
+#                 sprepost(P, Q)
+#                 - sprepost(Q, P)
+#                 + 0.5 * (spre(commutator(P, Q)) + spost(commutator(P, Q)))
+#             )
+#         )
+#     A_generators = jnp.array(A_generators)
+
+#     return H_generators, S_generators, C_generators, A_generators
+
+
+def _make_generators_n_qubits(
+    n_qubits: jnp.ndarray,
 ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     # Generate the generators for the Lie algebra of the quantum operations
     # Args:
@@ -424,16 +511,15 @@ def make_two_qubit_generators(
     #     A_generators: Array of shape (3, 4, 4) containing the generators for the anti-commutator part
 
     # Extract the identity and Pauli matrices from the unnormalized Hermitian basis
-    id = unnormalized_hermitian_basis_one_qubit[0]
-    pauli_basis_nonid = unnormalized_hermitian_basis_one_qubit[1:]
+    unnormalized_hermitian_basis = make_hermitian_basis(n_qubits, normalized=False)
+
+    id = unnormalized_hermitian_basis[0]
+    pauli_basis_nonid = unnormalized_hermitian_basis[1:]
 
     # Generate the generators for the Hamiltonian
     H_generators = []
     for P in pauli_basis_nonid:
         H_generators.append(adjoint_op(P))
-        # H_generators.append(
-        #     -1j*
-        # )
     H_generators = jnp.array(H_generators)
 
     # Generate the generators for the stochastic part
@@ -468,8 +554,51 @@ def make_two_qubit_generators(
     return H_generators, S_generators, C_generators, A_generators
 
 
-def make_two_qubit_dual_generators(
-    unnormalized_hermitian_basis: jnp.ndarray, dim: int
+# def _make_two_qubit_dual_generators(
+#     unnormalized_hermitian_basis: jnp.ndarray, dim: int
+# ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+#     # Generate the dual generators for the Lie algebra of the quantum operations
+#     # Args:
+#     #     unnormalized_hermitian_basis: Array of shape (4, 2, 2) containing the unnormalized Hermitian basis
+#     #     dim: Dimension of the Hilbert space
+#     # Returns:
+#     #     H_dual_generators: Array of shape (3, 2, 2) containing the dual generators for the Hamiltonian
+#     #     S_dual_generators: Array of shape (3, 4, 4) containing the dual generators for the stochastic part
+#     #     C_dual_generators: Array of shape (3, 4, 4) containing the dual generators for the coherent part
+#     #     A_dual_generators: Array of shape (3, 4, 4) containing the dual generators for the anti-commutator part
+
+#     # Extract the Pauli matrices from the normalized Hermitian basis
+#     unnormalized_pauli_basis = unnormalized_hermitian_basis[1:]
+
+#     # Generate the dual generators for the Hamiltonian
+#     H_dual_generators = []
+#     for P in unnormalized_pauli_basis:
+#         H_dual_generators.append(adjoint_op(P))
+#     H_dual_generators = jnp.array(H_dual_generators) / 2 / dim**2
+
+#     # Generate the dual generators for the stochastic part
+#     S_dual_generators = []
+#     for P in unnormalized_pauli_basis:
+#         S_dual_generators.append(sprepost(P, P))
+#     S_dual_generators = jnp.array(S_dual_generators) / dim**2
+
+#     # Generate the dual generators for the coherent part
+#     C_dual_generators = []
+#     for P, Q in combinations(unnormalized_pauli_basis, 2):
+#         C_dual_generators.append(sprepost(P, Q) + sprepost(Q, P))
+#     C_dual_generators = jnp.array(C_dual_generators) / 2 / dim**2
+
+#     # Generate the dual generators for the anti-commutator part
+#     A_dual_generators = []
+#     for P, Q in combinations(unnormalized_pauli_basis, 2):
+#         A_dual_generators.append(1j * (sprepost(P, Q) - sprepost(Q, P)))
+#     A_dual_generators = jnp.array(A_dual_generators) / 2 / dim**2
+
+#     return H_dual_generators, S_dual_generators, C_dual_generators, A_dual_generators
+
+
+def _make_dual_generators_n_qubits(
+    n_qubits,
 ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     # Generate the dual generators for the Lie algebra of the quantum operations
     # Args:
@@ -481,6 +610,8 @@ def make_two_qubit_dual_generators(
     #     C_dual_generators: Array of shape (3, 4, 4) containing the dual generators for the coherent part
     #     A_dual_generators: Array of shape (3, 4, 4) containing the dual generators for the anti-commutator part
 
+    dim = int(2**n_qubits)
+    unnormalized_hermitian_basis = make_hermitian_basis(n_qubits, normalized=False)
     # Extract the Pauli matrices from the normalized Hermitian basis
     unnormalized_pauli_basis = unnormalized_hermitian_basis[1:]
 
@@ -564,8 +695,7 @@ class LindbladGenerators(eqx.Module):
             self.dual_gens.A, (combinations, self.dimension**2, self.dimension**2)
         )
 
-    # @eqx.filter_jit
-    @jax.jit
+    @eqx.filter_jit
     def make_lindbladian(self, parameters: Parameters) -> Array:
         L = (
             (self.gens.H * parameters.H[:, None, None]).sum(0)
@@ -577,8 +707,12 @@ class LindbladGenerators(eqx.Module):
         # L = L + identity_part
         return L
 
-    # @eqx.filter_jit
     @jax.jit
+    def make_lindbladian_re_imag(self, parameters: Parameters) -> Array:
+        L = self.make_lindbladian(parameters)
+        return L.real, L.imag
+
+    @eqx.filter_jit
     def from_lindbladian(self, lindbladian: ArrayLike) -> Parameters:
         """
         Given a Lindbladian matrix L (shape d^2 x d^2), recover the parameters
@@ -600,6 +734,20 @@ class LindbladGenerators(eqx.Module):
         return Parameters(
             d=d, h_pars=H_pars, s_pars=S_pars, c_pars=C_pars, a_pars=A_pars
         )
+
+
+def make_lindblad_generators(n_qubits) -> LindbladGenerators:
+    dimension = 2**n_qubits
+    H, S, C, A = _make_generators_n_qubits(n_qubits)
+    H_dual, S_dual, C_dual, A_dual = _make_dual_generators_n_qubits(n_qubits=n_qubits)
+    gens_set = GeneratorsSet(jnp.array(H), jnp.array(S), jnp.array(C), jnp.array(A))
+    dual_gens_set = DualGeneratorsSet(
+        jnp.array(H_dual), jnp.array(S_dual), jnp.array(C_dual), jnp.array(A_dual)
+    )
+    lindblad_gens = LindbladGenerators(
+        dimension=dimension, generators=gens_set, dual_generators=dual_gens_set
+    )
+    return lindblad_gens
 
 
 # ---------------------------------------------------------------------------- #
@@ -631,93 +779,93 @@ class LindbladGenerators(eqx.Module):
 
 
 # @eqx.filter_jit
-@jax.jit
-def update_bloch_vector_from_parameters(
-    bloch_vector, update_matrix, parameters: Parameters
-):
-    """
-    Update the Bloch vector based on the update matrix and parameters.
+# @jax.jit
+# def update_bloch_vector_from_parameters(
+#     bloch_vector, update_matrix, parameters: Parameters
+# ):
+#     """
+#     Update the Bloch vector based on the update matrix and parameters.
 
-    Args:
-        bloch_vector (jnp.ndarray): Current Bloch vector.
-        update_matrix (jnp.ndarray): Update matrix.
-        parameters (Parameters): System parameters.
+#     Args:
+#         bloch_vector (jnp.ndarray): Current Bloch vector.
+#         update_matrix (jnp.ndarray): Update matrix.
+#         parameters (Parameters): System parameters.
 
-    Returns:
-        jnp.ndarray: Updated Bloch vector.
-    """
-    # Compute the update to the Bloch vector using einsum
-    bloch_vector_update = jnp.einsum(
-        "tab,t,b->a",
-        update_matrix,
-        parameters.flatten_pars(),
-        bloch_vector,
-    )
+#     Returns:
+#         jnp.ndarray: Updated Bloch vector.
+#     """
+#     # Compute the update to the Bloch vector using einsum
+#     bloch_vector_update = jnp.einsum(
+#         "tab,t,b->a",
+#         update_matrix,
+#         parameters.flatten_pars(),
+#         bloch_vector,
+#     )
 
-    # Add the identity matrix contribution and the update <- this is wrong, this is true if u work directly
-    # at the map level, but  we are working with lindbladians:
-    # $ \tr (rho^{dot}) = 0 = sum_ij d_{ij} G_j^{dag} G_i  -> sum_{i} d_{ii} = 0$
-    # bloch_vector_update = jnp.identity(16) @ bloch_vector + bloch_vector_update
+#     # Add the identity matrix contribution and the update <- this is wrong, this is true if u work directly
+#     # at the map level, but  we are working with lindbladians:
+#     # $ \tr (rho^{dot}) = 0 = sum_ij d_{ij} G_j^{dag} G_i  -> sum_{i} d_{ii} = 0$
+#     # bloch_vector_update = jnp.identity(16) @ bloch_vector + bloch_vector_update
 
-    # Return the real part of the updated Bloch vector
-    return bloch_vector_update.real
+#     # Return the real part of the updated Bloch vector
+#     return bloch_vector_update.real
 
 
-def make_update_matrix_bloch(l_gens: LindbladGenerators, normalized_basis):
-    """
-    Create an update matrix for the Bloch vector based on Lindblad generators and a normalized basis.
+# def make_update_matrix_bloch(l_gens: LindbladGenerators, normalized_basis):
+#     """
+#     Create an update matrix for the Bloch vector based on Lindblad generators and a normalized basis.
 
-    Args:
-        l_gens (LindbladGenerators): Lindblad generators.
-        normalized_basis: A normalized basis for the system.
+#     Args:
+#         l_gens (LindbladGenerators): Lindblad generators.
+#         normalized_basis: A normalized basis for the system.
 
-    Returns:
-        jnp.ndarray: The update matrix for the Bloch vector.
-    """
+#     Returns:
+#         jnp.ndarray: The update matrix for the Bloch vector.
+#     """
 
-    def vec_col(A):
-        """
-        Flatten a matrix column-wise.
+#     def vec_col(A):
+#         """
+#         Flatten a matrix column-wise.
 
-        Args:
-            A (jnp.ndarray): Input matrix.
+#         Args:
+#             A (jnp.ndarray): Input matrix.
 
-        Returns:
-            jnp.ndarray: Flattened matrix.
-        """
-        return A.flatten(order="F")
+#         Returns:
+#             jnp.ndarray: Flattened matrix.
+#         """
+#         return A.flatten(order="F")
 
-    # Vectorize the normalized basis using vmap
-    vec_norm_basis = jax.vmap(vec_col)(normalized_basis)
+#     # Vectorize the normalized basis using vmap
+#     vec_norm_basis = jax.vmap(vec_col)(normalized_basis)
 
-    def f(G_beta_vec, L_tau, G_alpha_vec):
-        """
-        Compute the dot product of G_beta_vec.conj(), L_tau @ G_alpha_vec.
+#     def f(G_beta_vec, L_tau, G_alpha_vec):
+#         """
+#         Compute the dot product of G_beta_vec.conj(), L_tau @ G_alpha_vec.
 
-        Args:
-            G_beta_vec (jnp.ndarray): Vector G_beta.
-            L_tau (jnp.ndarray): Matrix L_tau.
-            G_alpha_vec (jnp.ndarray): Vector G_alpha.
+#         Args:
+#             G_beta_vec (jnp.ndarray): Vector G_beta.
+#             L_tau (jnp.ndarray): Matrix L_tau.
+#             G_alpha_vec (jnp.ndarray): Vector G_alpha.
 
-        Returns:
-            jnp.ndarray: Result of the dot product.
-        """
-        return jnp.dot(G_beta_vec.conj(), L_tau @ G_alpha_vec)
+#         Returns:
+#             jnp.ndarray: Result of the dot product.
+#         """
+#         return jnp.dot(G_beta_vec.conj(), L_tau @ G_alpha_vec)
 
-    # Vectorize the function f using vmap
-    f_vmap = jax.vmap(
-        jax.vmap(jax.vmap(f, in_axes=(None, None, 0)), in_axes=(0, None, None)),
-        in_axes=(None, 0, None),
-    )
+#     # Vectorize the function f using vmap
+#     f_vmap = jax.vmap(
+#         jax.vmap(jax.vmap(f, in_axes=(None, None, 0)), in_axes=(0, None, None)),
+#         in_axes=(None, 0, None),
+#     )
 
-    re = []
-    for key_i in l_gens.gens.__dict__:
-        gens_arr = l_gens.gens.__dict__[key_i]
-        re.append(f_vmap(vec_norm_basis, gens_arr, vec_norm_basis))
+#     re = []
+#     for key_i in l_gens.gens.__dict__:
+#         gens_arr = l_gens.gens.__dict__[key_i]
+#         re.append(f_vmap(vec_norm_basis, gens_arr, vec_norm_basis))
 
-    # Stack the results vertically to form the update matrix
-    update_matrix = jnp.vstack(re)
-    return update_matrix
+#     # Stack the results vertically to form the update matrix
+#     update_matrix = jnp.vstack(re)
+#     return update_matrix
 
 
 # ---------------------------------------------------------------------------- #
@@ -728,6 +876,8 @@ def make_update_matrix_bloch(l_gens: LindbladGenerators, normalized_basis):
 def make_data_loader(arrays, batch_size, subkey):
     dataset_size = arrays[0].shape[0]
     assert all(array.shape[0] == dataset_size for array in arrays)
+    assert dataset_size >= batch_size
+
     indices = jnp.arange(dataset_size)
     while True:
         key, subkey = jax.random.split(subkey)
@@ -839,14 +989,15 @@ def build_restored_model(full_model, loaded_array_leaves):
 class Setup:
     initial_states: InitialStates
     povms: POVMS
-    bloch2d: Bloch2D
     lindblad_gens: LindbladGenerators
-    update_matrix: Array
     choi_projection: None
 
 
-def initialize_setup(config, spam_estimator="mean") -> Setup:
-    spam_estimation = joblib.load(config["spam_estimation_path"])
+def initialize_setup(
+    config, spam_estimator="mean", spam_estimation=None
+) -> Tuple[Setup, dict]:
+    if spam_estimation is None:
+        spam_estimation = joblib.load(config["spam_estimation_path"])
     if spam_estimator == "mean":
         rho_00 = spam_estimation["rhos"].mean(0)
         povm_z = spam_estimation["povms"].mean(0)
@@ -856,34 +1007,34 @@ def initialize_setup(config, spam_estimator="mean") -> Setup:
 
     array_povms = make_complete_povms(povm_z, array_two_qubits_measurements_gates)
     array_rhos = make_all_density_matrices(rho_00, array_two_qubits_states_gates)
-    normalized_hermitian_basis = make_hermitian_basis(n_qubits=2)
-    bloch2d = Bloch2D(normalized_hermitian_basis)
+    # normalized_hermitian_basis = make_hermitian_basis(n_qubits=2)
+    # bloch2d = Bloch2D(normalized_hermitian_basis)
     initial_states = InitialStates(array_rhos)
     povms = POVMS(array_povms)
-    unnorm_herm_basis = make_unnormalized_hermitian_basis(n_qubits=2)
-    dimension = 4
-    H, S, C, A = make_two_qubit_generators(unnorm_herm_basis)
-    H_dual, S_dual, C_dual, A_dual = make_two_qubit_dual_generators(
-        unnorm_herm_basis, dim=dimension
-    )
-    gens_set = GeneratorsSet(jnp.array(H), jnp.array(S), jnp.array(C), jnp.array(A))
-    dual_gens_set = DualGeneratorsSet(
-        jnp.array(H_dual), jnp.array(S_dual), jnp.array(C_dual), jnp.array(A_dual)
-    )
-    lindblad_gens = LindbladGenerators(
-        dimension=4, generators=gens_set, dual_generators=dual_gens_set
-    )
-    update_matrix = make_update_matrix_bloch(lindblad_gens, normalized_hermitian_basis)
+    # unnorm_herm_basis = make_hermitian_basis(n_qubits=2, normalized=False)
+    # dimension = 4
+    # H, S, C, A = _make_two_qubit_generators(unnorm_herm_basis)
+    # H_dual, S_dual, C_dual, A_dual = _make_two_qubit_dual_generators(
+    #     unnorm_herm_basis, dim=dimension
+    # )
+    # gens_set = GeneratorsSet(jnp.array(H), jnp.array(S), jnp.array(C), jnp.array(A))
+    # dual_gens_set = DualGeneratorsSet(
+    #     jnp.array(H_dual), jnp.array(S_dual), jnp.array(C_dual), jnp.array(A_dual)
+    # )
+    # lindblad_gens = LindbladGenerators(
+    #     dimension=4, generators=gens_set, dual_generators=dual_gens_set
+    # )
+
+    lindblad_gens = make_lindblad_generators(n_qubits=2)
+    # update_matrix = make_update_matrix_bloch(lindblad_gens, normalized_hermitian_basis)
     choi_projection = ChoiProjection(system_dimension=4)
     args_loss = {
         "initial_states": initial_states,
         "povms": povms,
-        "bloch2d": bloch2d,
-        "update_matrix": update_matrix,
+        # "bloch2d": bloch2d,
+        # "update_matrix": update_matrix,
         "lindblad_generators": lindblad_gens,
-        "short_time_gamma": 2,  # originally 3
+        "short_time_gamma": config.get("short_time_gamma", 0),  # if its none, put 0
         "choi_projection": choi_projection,
     }
-    return Setup(
-        initial_states, povms, bloch2d, lindblad_gens, update_matrix, choi_projection
-    ), args_loss
+    return Setup(initial_states, povms, lindblad_gens, choi_projection), args_loss

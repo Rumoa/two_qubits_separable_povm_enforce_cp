@@ -15,9 +15,9 @@ from two_q_sep_cp.neural_ode.utils import (
     GeneratorsSet,
     LindbladGenerators,
     Parameters,
+    _make_generators_n_qubits,
+    _make_two_qubit_dual_generators,
     make_hermitian_basis,
-    make_two_qubit_dual_generators,
-    make_two_qubit_generators,
     make_unnormalized_hermitian_basis,
     make_update_matrix_bloch,
     update_bloch_vector_from_parameters,
@@ -50,8 +50,8 @@ if os.path.exists(GENS_PATH) and os.path.exists(DUAL_GENS_PATH):
     dual_gens_set = joblib.load(DUAL_GENS_PATH)
     print("Loaded gens_set and dual_gens_set from cache.")
 else:
-    H, S, C, A = make_two_qubit_generators(unnorm_herm_basis)
-    H_dual, S_dual, C_dual, A_dual = make_two_qubit_dual_generators(
+    H, S, C, A = _make_generators_n_qubits(unnorm_herm_basis)
+    H_dual, S_dual, C_dual, A_dual = _make_two_qubit_dual_generators(
         unnorm_herm_basis, dim=4
     )
 
